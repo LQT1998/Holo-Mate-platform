@@ -21,12 +21,12 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual environments
+# Virtual Environment
+.venv/
 venv/
-env/
 ENV/
-env.bak/
-venv.bak/
+env/
+.env
 
 # IDE
 .vscode/
@@ -44,140 +44,30 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn-integrity
-
-# Next.js
-.next/
-out/
-
-# React Native
-.expo/
-.expo-shared/
-
-# Unity
-unity_client/Library/
-unity_client/Temp/
-unity_client/Obj/
-unity_client/Build/
-unity_client/Builds/
-unity_client/Logs/
-unity_client/UserSettings/
-unity_client/ProjectSettings/ProjectVersion.txt
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
 # Logs
-logs/
 *.log
+logs/
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
+# Temporary files
+*.tmp
+*.temp
 
 # Docker
 .dockerignore
 
-# AI/ML models
-*.pkl
-*.joblib
-*.h5
-*.pb
-
-# Audio files (for testing)
-test_audio/
-*.wav
-*.mp3
-*.m4a
-
-# 3D Assets (keep source, ignore processed)
-*.blend1
-*.blend2
-*.tmp
+# Secrets
+.env.local
+.env.production
+secrets/

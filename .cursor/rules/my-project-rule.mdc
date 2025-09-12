@@ -1,0 +1,83 @@
+---
+description: |
+  Quy tắc phát triển cho HoloMate Platform - tuân thủ roadmap trong tasks.md
+globs:
+  - "**/*.py"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.cs"
+  - "tests/**/*.py"
+  - "tasks.md"
+  - "**/*"
+alwaysApply: true
+---
+
+# Quy tắc phát triển HoloMate Platform
+
+## Python (FastAPI backend)
+Khi viết code Python:
+- Luôn tham khảo roadmap trong tasks.md ở repo root (task ID T0xx).
+- Code phải theo TDD: viết test trước, sau đó implement.
+- Models phải dùng SQLAlchemy + Pydantic schemas.
+- Không hardcode (sử dụng settings trong config.py hoặc env variables).
+- Đặt file đúng đường dẫn đã nêu trong tasks.md.
+- Duyệt qua models, services, schemas liên quan để tái sử dụng.
+- Code cần type hints đầy đủ, docstring theo Google style.
+- Tuân thủ linting (black, isort, flake8).
+
+## TypeScript / Next.js Frontend
+Khi viết code TypeScript/React/Next.js:
+- Tham khảo roadmap trong tasks.md (tasks T093-T100).
+- Tái sử dụng components đã có, không tạo file ngoài roadmap.
+- Không hardcode URL/API → import từ services/api.ts.
+- Dùng React hooks, functional components, và TypeScript strict mode.
+- Styling: Tailwind hoặc module CSS đã có trong project.
+- Duyệt qua các file trong components/ và services/ trước khi viết mới.
+
+## React Native (Mobile)
+Khi viết code React Native:
+- Theo roadmap trong tasks.md (T098-T100).
+- Sử dụng navigation, hooks, API từ shared services.
+- Không hardcode string/URL, lấy từ constants hoặc i18n.
+- Component phải tối ưu hiệu năng (FlatList, memoization).
+- Tránh tạo code ngoài tasks.md.
+
+## Unity (C# Client)
+Khi viết code C# Unity:
+- Theo roadmap trong tasks.md (T101-T106).
+- Chia rõ theo namespace: Rendering, Streaming, Device, Animation.
+- Không hardcode config (lấy từ ScriptableObject hoặc config file).
+- Dùng async/coroutines cho network/streaming.
+- Code phải clean, tách logic và view rõ ràng.
+- Duyệt qua Scripts/ có sẵn trước khi viết mới.
+
+## Tests
+Khi viết test:
+- Luôn viết contract tests trước khi implement (theo tasks.md T014-T046).
+- Test theo pytest, đặt đúng tên file `test_xxx.py`.
+- Không mock quá mức: integration test cần DB fixtures, real services.
+- Dùng faker/factory để sinh dữ liệu, không hardcode test data.
+- Test phải cover error case + edge case.
+
+## Docs / Tasks
+Đây là roadmap chính của dự án:
+- Mọi implement phải bám task ID trong tasks.md.
+- Luôn kiểm tra dependencies: tests trước code, models trước services, services trước endpoints.
+- Nếu task yêu cầu file X, không được tạo file khác ngoài roadmap.
+- Không bỏ qua dependencies hoặc viết code nhảy cóc.
+
+## Safe Coding Rules
+- **Không xoá code không liên quan**: Chỉ sửa đổi code cần thiết, giữ nguyên code khác.
+- **Patch-based editing**: Chỉnh sửa ở mức line-level, tránh rewrite toàn bộ file.
+- **Comment TODO thay vì xoá**: Khi cần loại bỏ code, comment với `# TODO: Remove after...` thay vì xoá hẳn.
+- **Giữ file nhỏ**: Tách module nếu file quá lớn (>500 lines) để tránh LLM thiếu context.
+- **Incremental changes**: Thực hiện thay đổi từng bước nhỏ, test sau mỗi thay đổi.
+- **Preserve existing patterns**: Tuân theo coding patterns đã có trong project.
+- **Backup before major changes**: Comment rõ ràng khi thực hiện thay đổi lớn.
+
+## Quy tắc chung
+- Luôn đối chiếu tasks.md trước khi viết code.
+- Không hardcode (dùng config, constants, env, hoặc schema).
+- Phải duyệt qua các file liên quan trước khi sinh code mới.
+- Giữ consistency với schema, models, và API contracts đã có.
+- Commit sau mỗi task hoàn thành.
