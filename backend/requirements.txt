@@ -52,3 +52,7 @@ rich==13.7.0
 # Utilities
 python-dotenv==1.0.0
 click==8.1.7
+asyncpg
+aiosqlite
+greenlet
+ email-validator

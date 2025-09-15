@@ -55,7 +55,7 @@
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
 
 ### Contract Tests (API Endpoints)
-- [x] T014 [P] Contract test POST /auth/login in tests/contract/test_auth_login.py
+- [✓] T014 [P] Contract test POST /auth/login in tests/contract/test_auth_login.py
 - [x] T015 [P] Contract test POST /auth/refresh in tests/contract/test_auth_refresh.py
 - [x] T016 [P] Contract test GET /users/me in tests/contract/test_users_me.py
 - [x] T017 [P] Contract test PUT /users/me in tests/contract/test_users_update.py
@@ -123,7 +123,7 @@
 - [ ] T069 [P] CLI --test-streaming in backend/streaming_service/src/cli/streaming_commands.py
 
 ### API Endpoints Implementation
-- [ ] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.py
+- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.py
 - [ ] T071 POST /auth/refresh endpoint in backend/auth_service/src/api/auth.py
 - [ ] T072 GET /users/me endpoint in backend/auth_service/src/api/users.py
 - [ ] T073 PUT /users/me endpoint in backend/auth_service/src/api/users.py
