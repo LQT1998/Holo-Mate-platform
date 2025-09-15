@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # Assuming your API routers are in app.api
-from app.api import auth, users
+from auth_service.src.api import auth, users
 
 app = FastAPI(
     title="Holo-Mate Auth Service",
@@ -39,5 +39,3 @@ async def health_check():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-

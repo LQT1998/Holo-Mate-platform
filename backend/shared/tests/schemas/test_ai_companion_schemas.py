@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from backend.shared.src.schemas.ai_companion_schema import AICompanionCreate, AICompanionUpdate
+from shared.src.schemas.ai_companion_schema import AICompanionCreate, AICompanionUpdate
 
 def test_ai_companion_create_valid():
     """Test a valid AICompanionCreate schema."""

@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from backend.shared.src.schemas.user_schema import UserCreate, UserUpdate
+from shared.src.schemas.user_schema import UserCreate, UserUpdate
 
 def test_user_create_schema_valid():
     """Test that a valid UserCreate schema passes validation."""

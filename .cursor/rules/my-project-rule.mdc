@@ -2,13 +2,12 @@
 description: |
   Quy tắc phát triển cho HoloMate Platform - tuân thủ roadmap trong tasks.md
 globs:
-  - "**/*.py"
-  - "**/*.ts"
-  - "**/*.tsx"
-  - "**/*.cs"
+  - "backend/**/*.py"
+  - "frontend/**/*.ts"
+  - "frontend/**/*.tsx"
+  - "unity_client/**/*.cs"
   - "tests/**/*.py"
   - "tasks.md"
-  - "**/*"
 alwaysApply: true
 ---
 
@@ -18,66 +17,87 @@ alwaysApply: true
 Khi viết code Python:
 - Luôn tham khảo roadmap trong tasks.md ở repo root (task ID T0xx).
 - Code phải theo TDD: viết test trước, sau đó implement.
-- Models phải dùng SQLAlchemy + Pydantic schemas.
-- Không hardcode (sử dụng settings trong config.py hoặc env variables).
-- Đặt file đúng đường dẫn đã nêu trong tasks.md.
-- Duyệt qua models, services, schemas liên quan để tái sử dụng.
+- Models & Schemas:
+  - **Chung** (User, AICompanion, Conversation, Message, Subscription, VoiceProfile, AnimationSequence, UserPreference, CharacterAsset) → đặt trong `backend/shared/src/models/`.
+  - **auth_service** (OAuthSession, RefreshToken, AuditLog…) → đặt trong `backend/auth_service/src/models/`.
+  - **ai_service** (PromptTemplate, ContextCache, LLMSession…) → đặt trong `backend/ai_service/src/models/`.
+  - **streaming_service** (StreamSession, DeviceStreamConfig…) → đặt trong `backend/streaming_service/src/models/`.
+  - Khi nghi ngờ → **ưu tiên `backend/shared/src/models/`** để tránh trùng lặp.
+  - **Schemas dùng chung** → `backend/shared/src/schemas/`.
+  - **Schema đặc thù service** (nếu có) → đặt ngay trong `backend/<service>_service/src/models/` (giữ tối giản cấu trúc như đã thống nhất).
+  - CLI test/debug **dùng chung** → `backend/shared/src/cli/`.
+  - CLI **đặc thù** (ví dụ `--create-user` của auth_service) → `backend/<service>_service/src/cli/`.
+  - Trong `services/` → file theo entity (vd: `user_service.py`, `conversation_service.py`) để bám tasks.md.
+  - Trong `api/` → file theo route (vd: `users.py`, `conversations.py`).
+- Không hardcode (dùng settings trong `config.py` hoặc env variables).
 - Code cần type hints đầy đủ, docstring theo Google style.
 - Tuân thủ linting (black, isort, flake8).
 
+## Python Convention (Backend Services)
+- Thư mục chuẩn trong mỗi service:
+  - `backend/<service>_service/src/api/` → API endpoints (FastAPI routers)
+  - `backend/<service>_service/src/models/` → models chuyên biệt của service
+  - `backend/<service>_service/src/services/` → business logic
+  - `backend/<service>_service/src/cli/` → CLI commands
+- Các entity dùng chung (User, AICompanion, Conversation, Message, Subscription, VoiceProfile, UserPreference, CharacterAsset, AnimationSequence) → `backend/shared/src/models/`
+- **Không** dùng `app/` hay `service/` lạc chỗ → tất cả thống nhất là `services/`
+
 ## TypeScript / Next.js Frontend
 Khi viết code TypeScript/React/Next.js:
-- Tham khảo roadmap trong tasks.md (tasks T093-T100).
+- Tham khảo roadmap trong tasks.md (tasks T093–T100).
 - Tái sử dụng components đã có, không tạo file ngoài roadmap.
-- Không hardcode URL/API → import từ services/api.ts.
+- Không hardcode URL/API → import từ `services/api.ts`.
 - Dùng React hooks, functional components, và TypeScript strict mode.
 - Styling: Tailwind hoặc module CSS đã có trong project.
-- Duyệt qua các file trong components/ và services/ trước khi viết mới.
+- Duyệt qua `src/components/` và `src/services/` trước khi viết mới.
 
 ## React Native (Mobile)
 Khi viết code React Native:
-- Theo roadmap trong tasks.md (T098-T100).
+- Theo roadmap trong tasks.md (T098–T100).
 - Sử dụng navigation, hooks, API từ shared services.
 - Không hardcode string/URL, lấy từ constants hoặc i18n.
-- Component phải tối ưu hiệu năng (FlatList, memoization).
+- Component tối ưu hiệu năng (FlatList, memoization).
 - Tránh tạo code ngoài tasks.md.
 
 ## Unity (C# Client)
 Khi viết code C# Unity:
-- Theo roadmap trong tasks.md (T101-T106).
+- Theo roadmap trong tasks.md (T101–T106).
 - Chia rõ theo namespace: Rendering, Streaming, Device, Animation.
-- Không hardcode config (lấy từ ScriptableObject hoặc config file).
+- Không hardcode config (ScriptableObject hoặc config file).
 - Dùng async/coroutines cho network/streaming.
-- Code phải clean, tách logic và view rõ ràng.
-- Duyệt qua Scripts/ có sẵn trước khi viết mới.
+- Code clean, tách logic và view rõ ràng.
+- Script ≤ 300 lines; dài hơn thì tách class/module.
 
 ## Tests
 Khi viết test:
-- Luôn viết contract tests trước khi implement (theo tasks.md T014-T046).
-- Test theo pytest, đặt đúng tên file `test_xxx.py`.
+- Luôn viết contract tests **trước** khi implement (theo tasks.md T014–T046).
+- Đặt test đúng thư mục:
+  - Contract tests → `tests/contract/test_<endpoint>.py`
+  - Integration tests → `tests/integration/test_<flow>.py`
+  - Unit tests → `tests/unit/test_<module>.py`
 - Không mock quá mức: integration test cần DB fixtures, real services.
 - Dùng faker/factory để sinh dữ liệu, không hardcode test data.
-- Test phải cover error case + edge case.
+- Test phải cover cả error case + edge case.
 
 ## Docs / Tasks
-Đây là roadmap chính của dự án:
 - Mọi implement phải bám task ID trong tasks.md.
-- Luôn kiểm tra dependencies: tests trước code, models trước services, services trước endpoints.
+- Luôn kiểm tra dependencies: tests → models → services → endpoints.
 - Nếu task yêu cầu file X, không được tạo file khác ngoài roadmap.
 - Không bỏ qua dependencies hoặc viết code nhảy cóc.
+- Nếu thêm API endpoint hoặc model quan trọng → cập nhật docstring và tài liệu liên quan trong `docs/`.
 
 ## Safe Coding Rules
-- **Không xoá code không liên quan**: Chỉ sửa đổi code cần thiết, giữ nguyên code khác.
-- **Patch-based editing**: Chỉnh sửa ở mức line-level, tránh rewrite toàn bộ file.
-- **Comment TODO thay vì xoá**: Khi cần loại bỏ code, comment với `# TODO: Remove after...` thay vì xoá hẳn.
-- **Giữ file nhỏ**: Tách module nếu file quá lớn (>500 lines) để tránh LLM thiếu context.
-- **Incremental changes**: Thực hiện thay đổi từng bước nhỏ, test sau mỗi thay đổi.
-- **Preserve existing patterns**: Tuân theo coding patterns đã có trong project.
-- **Backup before major changes**: Comment rõ ràng khi thực hiện thay đổi lớn.
+- **Không xoá code không liên quan**: chỉ sửa đổi code cần thiết, giữ nguyên phần khác.
+- **Patch-based editing**: chỉnh sửa mức line-level, tránh rewrite toàn bộ file.
+- **Comment TODO thay vì xoá**: khi cần loại bỏ code, comment `# TODO: Remove after...`.
+- **Giữ file nhỏ**: tách module nếu file > 500 lines.
+- **Incremental changes**: thay đổi từng bước nhỏ, test sau mỗi thay đổi.
+- **Preserve existing patterns**: tuân theo coding patterns đã có trong project.
+- **Backup before major changes**: comment rõ khi thực hiện thay đổi lớn.
 
 ## Quy tắc chung
 - Luôn đối chiếu tasks.md trước khi viết code.
 - Không hardcode (dùng config, constants, env, hoặc schema).
-- Phải duyệt qua các file liên quan trước khi sinh code mới.
+- Duyệt qua các file liên quan trước khi sinh code mới.
 - Giữ consistency với schema, models, và API contracts đã có.
 - Commit sau mỗi task hoàn thành.

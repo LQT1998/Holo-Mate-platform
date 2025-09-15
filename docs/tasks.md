@@ -80,16 +80,16 @@
 - [x] T036 [P] Contract test GET /voice-profiles in tests/contract/test_voice_profiles_list.py
 
 ### Integration Tests (User Stories)
-- [x] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py
-- [x] T038 [P] Integration test AI companion creation in tests/integration/test_companion_creation.py
-- [x] T039 [P] Integration test voice conversation flow in tests/integration/test_voice_conversation.py
-- [x] T040 [P] Integration test device pairing in tests/integration/test_device_pairing.py
-- [x] T041 [P] Integration test subscription management in tests/integration/test_subscription_management.py
-- [x] T042 [P] Integration test multi-device sync in tests/integration/test_multi_device_sync.py
-- [x] T043 [P] Integration test GDPR compliance in tests/integration/test_gdpr_compliance.py
-- [x] T044 [P] Integration test full-duplex streaming in tests/integration/test_full_duplex_streaming.py
-- [x] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py
-- [x] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py
+- [ ] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py
+- [ ] T038 [P] Integration test AI companion creation in tests/integration/test_companion_creation.py
+- [ ] T039 [P] Integration test voice conversation flow in tests/integration/test_voice_conversation.py
+- [ ] T040 [P] Integration test device pairing in tests/integration/test_device_pairing.py
+- [ ] T041 [P] Integration test subscription management in tests/integration/test_subscription_management.py
+- [ ] T042 [P] Integration test multi-device sync in tests/integration/test_multi_device_sync.py
+- [ ] T043 [P] Integration test GDPR compliance in tests/integration/test_gdpr_compliance.py
+- [ ] T044 [P] Integration test full-duplex streaming in tests/integration/test_full_duplex_streaming.py
+- [ ] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py
+- [ ] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 
@@ -125,9 +125,9 @@
 ### API Endpoints Implementation
 - [ ] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.py
 - [ ] T071 POST /auth/refresh endpoint in backend/auth_service/src/api/auth.py
-- [x] T072 GET /users/me endpoint in backend/auth_service/src/api/users.py
-- [x] T073 PUT /users/me endpoint in backend/auth_service/src/api/users.py
-- [x] T074 GET /ai-companions endpoint in backend/ai_service/src/api/ai_companions.py
+- [ ] T072 GET /users/me endpoint in backend/auth_service/src/api/users.py
+- [ ] T073 PUT /users/me endpoint in backend/auth_service/src/api/users.py
+- [ ] T074 GET /ai-companions endpoint in backend/ai_service/src/api/ai_companions.py
 - [ ] T075 POST /ai-companions endpoint in backend/ai_service/src/api/ai_companions.py
 - [ ] T076 GET /ai-companions/{id} endpoint in backend/ai_service/src/api/ai_companions.py
 - [ ] T077 PUT /ai-companions/{id} endpoint in backend/ai_service/src/api/ai_companions.py
@@ -264,15 +264,6 @@ Task: "DeviceService in backend/streaming_service/src/services/device_service.py
 - Follow TDD: Red → Green → Refactor cycle
 - Use real dependencies in integration tests
 - Maintain constitutional principles throughout
-
-## Project Rules: Python Path (FastAPI services)
-- Pytest has Python path configured in `pytest.ini` (already includes `backend/auth_service/src` and `backend/shared/src`).
-- When running services manually, set PYTHONPATH explicitly:
-  - Auth Service (port 8001):
-    - `PYTHONPATH=backend/auth_service/src:backend/shared/src uvicorn backend.auth_service.main:app --port 8001`
-  - AI Service (port 8002):
-    - `PYTHONPATH=backend/ai_service:backend/ai_service/src uvicorn backend.ai_service.main:app --port 8002`
-  - Tip: add these to your shell profile/direnv or Makefile targets to avoid forgetting.
 
 ## Task Generation Rules
 *Applied during main() execution*

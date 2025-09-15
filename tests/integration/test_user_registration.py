@@ -1,3 +1,62 @@
+"""
+Integration test: user registration → login → get profile (RED phase).
+
+Flow:
+1) POST /auth/register with email + password → expect 201, returns user_id + email
+2) POST /auth/login with same credentials → expect 200, returns access_token
+3) GET /users/me with Bearer token → expect 200, returns correct user info
+
+NOTE: This test is expected to fail until services and endpoints are implemented.
+"""
+
+from __future__ import annotations
+
+import uuid
+import pytest
+import httpx
+from typing import Dict
+
+
+@pytest.fixture
+def auth_base_url() -> str:
+    # Convention: auth_service exposed at 8001 in local/dev
+    # Adjust via env or docker-compose as needed
+    return "http://localhost:8001"
+
+
+def _unique_email() -> str:
+    return f"user_{uuid.uuid4().hex[:8]}@example.com"
+
+
+@pytest.mark.asyncio
+async def test_user_registration_login_profile_flow(auth_base_url: str):
+    async with httpx.AsyncClient(base_url=auth_base_url, timeout=10.0) as client:
+        # 1) Register
+        email = _unique_email()
+        password = "StrongPassw0rd!"
+        register_payload: Dict[str, str] = {"email": email, "password": password}
+
+        register_resp = await client.post("/auth/register", json=register_payload)
+        assert register_resp.status_code == 201
+        reg_json = register_resp.json()
+        assert "user_id" in reg_json and reg_json["user_id"]
+        assert reg_json.get("email") == email
+
+        # 2) Login
+        login_payload: Dict[str, str] = {"email": email, "password": password}
+        login_resp = await client.post("/auth/login", json=login_payload)
+        assert login_resp.status_code == 200
+        login_json = login_resp.json()
+        access_token = login_json.get("access_token")
+        assert access_token and isinstance(access_token, str)
+
+        # 3) Get profile
+        headers = {"Authorization": f"Bearer {access_token}"}
+        me_resp = await client.get("/users/me", headers=headers)
+        assert me_resp.status_code == 200
+        me_json = me_resp.json()
+        assert me_json.get("email") == email
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.orm import Session

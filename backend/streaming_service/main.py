@@ -5,6 +5,7 @@ Real-time voice processing and WebSocket handling
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from src.exceptions import AppError, app_error_handler
 import uvicorn
 
 app = FastAPI(
@@ -21,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Exception handlers
+app.add_exception_handler(AppError, app_error_handler)
 
 @app.get("/")
 async def root():
