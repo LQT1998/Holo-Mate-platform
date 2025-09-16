@@ -3,18 +3,49 @@ Pydantic schemas for AI Companion data
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any, Literal
+from typing import Optional, List, Literal
 from datetime import datetime
 import uuid
+
+
+class Personality(BaseModel):
+    traits: Optional[List[str]] = None
+    communication_style: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    humor_level: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    empathy_level: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+
+
+class VoiceProfile(BaseModel):
+    voice_id: Optional[str] = Field(default=None, min_length=1)
+    speed: Optional[float] = Field(default=None, ge=0.1, le=3.0)
+    pitch: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    volume: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+
+
+class CharacterAsset(BaseModel):
+    model_id: Optional[str] = Field(default=None, min_length=1)
+    animations: Optional[List[str]] = None
+    emotions: Optional[List[Literal["happy", "sad", "excited", "calm", "angry", "neutral"]]] = None
+    # Avoid pydantic protected namespace warning for field name 'model_id'
+    model_config = {
+        "protected_namespaces": ()
+    }
+
+
+class Preferences(BaseModel):
+    conversation_topics: Optional[List[str]] = None
+    response_length: Optional[Literal["short", "medium", "long"]] = None
+    formality_level: Optional[Literal["casual", "formal", "neutral"]] = None
 
 
 class AICompanionBase(BaseModel):
     """Base AI Companion schema with common fields"""
     name: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=500)
-    personality: str = Field(..., min_length=1, max_length=1000)
-    voice_profile: Optional[Dict[str, Any]] = None
-    character_asset: Optional[Dict[str, Any]] = None
+    personality: Optional[Personality] = None
+    voice_profile: Optional[VoiceProfile] = None
+    character_asset: Optional[CharacterAsset] = None
+    preferences: Optional[Preferences] = None
     status: Literal["active", "inactive", "training", "error"]
 
 
@@ -39,21 +70,19 @@ class AICompanionListResponse(BaseModel):
 
 
 class AICompanionCreate(AICompanionBase):
-    """Schema for creating a new AI Companion.
-    
-    Same fields as base schema; used for POST requests.
-    """
-    pass
+    """Schema for creating a new AI Companion"""
+    status: Optional[Literal["active", "inactive", "training", "error"]] = "active"
 
 
 class AICompanionUpdate(BaseModel):
     """Schema for updating AI Companion"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, min_length=1, max_length=500)
-    personality: Optional[str] = Field(None, min_length=1, max_length=1000)
-    voice_profile: Optional[Dict[str, Any]] = None
-    character_asset: Optional[Dict[str, Any]] = None
-    status: Optional[str] = Field(None, pattern="^(active|inactive|training|error)$")
+    personality: Optional[Personality] = None
+    voice_profile: Optional[VoiceProfile] = None
+    character_asset: Optional[CharacterAsset] = None
+    preferences: Optional[Preferences] = None
+    status: Optional[Literal["active", "inactive", "training", "error"]] = None
 
     class Config:
         extra = "forbid"

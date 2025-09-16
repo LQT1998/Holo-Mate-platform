@@ -2,7 +2,7 @@
 Dependency injection for authentication in AI service
 """
 
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timezone
@@ -10,24 +10,33 @@ from datetime import datetime, timezone
 from ai_service.src.config import settings
 from shared.src.security.security import verify_access_token  # dùng chung từ shared
 
-security = HTTPBearer()
+# auto_error=False để tránh 403 mặc định
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
-) -> dict:
+) -> dict[str, Any]:
     """
     Get current authenticated user from JWT token.
-    In dev mode: allow fixed test token.
-    In production: verify JWT using shared security utils.
+    - Dev mode: fixed test token.
+    - Production: verify JWT with shared utils.
     """
     try:
+        # Missing credentials -> 401 Unauthorized
+        if credentials is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         token = credentials.credentials
 
-        # Dev shortcut for contract tests
+        # --- Dev shortcut ---
         if settings.DEV_MODE:
             if token == "valid_access_token_here":
-                now = datetime.now(timezone.utc).isoformat()
+                now = datetime.now(timezone.utc)
                 return {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "email": "test@example.com",
@@ -53,7 +62,7 @@ async def get_current_user(
         return {
             "id": payload.get("user_id") or payload.get("sub"),
             "email": payload.get("email"),
-            "is_active": True,  # JWT không lưu cờ này → giả định True
+            "is_active": True,  # giả định true vì JWT không lưu cờ này
         }
 
     except HTTPException:
