@@ -57,7 +57,7 @@
 ### Contract Tests (API Endpoints)
 - [✓] T014 [P] Contract test POST /auth/login in tests/contract/test_auth_login.py
 - [✓] T015 [P] Contract test POST /auth/refresh in tests/contract/test_auth_refresh.py
-- [x] T016 [P] Contract test GET /users/me in tests/contract/test_users_me.py
+- [✓] T016 [P] Contract test GET /users/me in tests/contract/test_users_me.py
 - [x] T017 [P] Contract test PUT /users/me in tests/contract/test_users_update.py
 - [x] T018 [P] Contract test GET /ai-companions in tests/contract/test_ai_companions_list.py
 - [x] T019 [P] Contract test POST /ai-companions in tests/contract/test_ai_companions_create.py
