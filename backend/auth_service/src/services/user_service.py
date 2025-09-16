@@ -1,5 +1,8 @@
 # backend/auth_service/src/services/user_service.py
 
+from typing import Optional, Union
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from shared.src.models.user import User
@@ -23,21 +26,46 @@ class UserService:
         await self.db.refresh(user)
         return user
 
-    async def get_user_by_email(self, email: str) -> User | None:
+    async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get a user by email."""
         result = await self.db.execute(select(User).where(User.email == email))
         return result.scalars().first()
 
-    async def get_user_by_id(self, user_id: int) -> User | None:
-        """Get a user by ID."""
+    async def get_user_by_id(self, user_id: Union[UUID, str]) -> Optional[User]:
+        """Get a user by UUID."""
         result = await self.db.execute(select(User).where(User.id == user_id))
         return result.scalars().first()
 
-    async def delete_user(self, user_id: int) -> bool:
-        """Delete a user by ID."""
+    async def update_user(self, user_id: int, updates: dict) -> User | None:
+        """Update user fields and persist.
+
+        Args:
+            user_id: ID of the user to update
+            updates: dict of fields to update (already validated)
+
+        Returns:
+            Updated User or None if not found
+        """
         user = await self.get_user_by_id(user_id)
         if not user:
-            return False
+            return None
+
+        for field_name, field_value in updates.items():
+            setattr(user, field_name, field_value)
+
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def delete_user(self, user_id: Union[UUID, str]) -> Optional[User]:
+        """Delete a user by UUID and return the deleted user.
+
+        This mimics a soft-delete return signature by returning the removed entity
+        so callers can inspect what was deleted.
+        """
+        user = await self.get_user_by_id(user_id)
+        if not user:
+            return None
         await self.db.delete(user)
         await self.db.commit()
-        return True
+        return user
