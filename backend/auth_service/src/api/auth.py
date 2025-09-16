@@ -9,7 +9,7 @@ from auth_service.src.config import settings
 from auth_service.src.db.session import get_db
 from auth_service.src.services.auth_service import AuthService
 from auth_service.src.services.user_service import UserService
-from auth_service.src.security import verify_password
+from shared.src.security.utils import verify_password
 from shared.src.schemas import (
     Token,
     TokenSchema,

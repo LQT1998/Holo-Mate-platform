@@ -9,7 +9,7 @@ from typing import Dict, Any
 from datetime import datetime, timedelta, timezone
 
 # Import JWT helpers for token generation
-from backend.auth_service.src.security.security import create_access_token
+from backend.shared.src.security.security import create_access_token
 
 
 class TestGetUsersMe:
@@ -41,7 +41,7 @@ class TestGetUsersMe:
             "email": "test@example.com",
             "exp": datetime.now(timezone.utc) - timedelta(hours=1)  # Expired 1 hour ago
         }
-        from backend.auth_service.src.security.security import jwt
+        from backend.shared.src.security.security import jwt
         from backend.auth_service.src.config import settings
         secret = settings.JWT_SECRET or "dev-secret"
         return jwt.encode(token_data, secret, algorithm="HS256")
