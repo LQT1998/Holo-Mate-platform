@@ -59,7 +59,7 @@
 - [✓] T015 [P] Contract test POST /auth/refresh in tests/contract/test_auth_refresh.py
 - [✓] T016 [P] Contract test GET /users/me in tests/contract/test_users_me.py
 - [✓] T017 [P] Contract test PUT /users/me in tests/contract/test_users_update.py
-- [x] T018 [P] Contract test GET /ai-companions in tests/contract/test_ai_companions_list.py
+- [✓] T018 [P] Contract test GET /ai-companions in tests/contract/test_ai_companions_list.py
 - [x] T019 [P] Contract test POST /ai-companions in tests/contract/test_ai_companions_create.py
 - [x] T020 [P] Contract test GET /ai-companions/{id} in tests/contract/test_ai_companions_get.py
 - [x] T021 [P] Contract test PUT /ai-companions/{id} in tests/contract/test_ai_companions_update.py
@@ -127,7 +127,7 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T071 POST /auth/refresh endpoint in backend/auth_service/src/api/auth.py
 - [✓] T072 GET /users/me endpoint in backend/auth_service/src/api/users.py
 - [✓] T073 PUT /users/me endpoint in backend/auth_service/src/api/users.py
-- [ ] T074 GET /ai-companions endpoint in backend/ai_service/src/api/ai_companions.py
+- [✓] T074 GET /ai-companions endpoint in backend/ai_service/src/api/ai_companions.py
 - [ ] T075 POST /ai-companions endpoint in backend/ai_service/src/api/ai_companions.py
 - [ ] T076 GET /ai-companions/{id} endpoint in backend/ai_service/src/api/ai_companions.py
 - [ ] T077 PUT /ai-companions/{id} endpoint in backend/ai_service/src/api/ai_companions.py

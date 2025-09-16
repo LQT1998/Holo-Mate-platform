@@ -5,8 +5,12 @@ AI companion management and conversation handling
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.exceptions import AppError, app_error_handler
+from ai_service.src.exceptions import AppError, app_error_handler
 import uvicorn
+
+# Local imports (absolute from ai_service package)
+from ai_service.src.exceptions import AppError, app_error_handler
+from ai_service.src.api import ai_companions
 
 app = FastAPI(
     title="Holo-Mate AI Service",
@@ -33,6 +37,9 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "ai_service"}
+
+# Routers
+app.include_router(ai_companions.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
