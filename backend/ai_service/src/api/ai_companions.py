@@ -7,14 +7,42 @@ from ai_service.src.schemas.ai_companion import (
     AICompanionRead,
     AICompanionCreate,
     AICompanionUpdate,
+    DeleteResponse,
     VoiceProfile,
     CharacterAsset,
 )
 from ai_service.src.config import settings
 import uuid
 from datetime import datetime, timezone
+from backend.shared.src.constants import (
+    DEV_KNOWN_COMPANION_ID,
+    DEV_FORBIDDEN_ID,
+    DEV_NONEXISTENT_PREFIX,
+    DEV_OWNER_ID,
+    MOCK_AI_COMPANION,
+)
+UUID_RE = re.compile(r"^[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}$")
+
 
 router = APIRouter(tags=["AI Companions"])
+
+
+def validate_companion_id(companion_id: str) -> None:
+    """
+    Validate companion ID format for dev mode testing.
+    Raises HTTPException with 422 status if invalid.
+    """
+    if (
+        not companion_id
+        or companion_id.strip() != companion_id
+        or any(ch.isspace() for ch in companion_id)
+    ):
+        raise HTTPException(status_code=422, detail="Invalid companion id format")
+    if not UUID_RE.match(companion_id) and companion_id not in {
+        DEV_KNOWN_COMPANION_ID,
+        DEV_FORBIDDEN_ID,
+    } and not companion_id.startswith(DEV_NONEXISTENT_PREFIX):
+        raise HTTPException(status_code=422, detail="Invalid companion id format")
 
 
 @router.get("/ai-companions", response_model=AICompanionListResponse)
@@ -46,7 +74,7 @@ async def list_ai_companions(
         mock_companions = [
             AICompanionRead(
                 id=uuid.uuid4(),
-                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                user_id=uuid.UUID(str(DEV_OWNER_ID)),
                 name="Test Assistant",
                 description="A helpful AI assistant for testing",
                 personality=None,
@@ -59,7 +87,7 @@ async def list_ai_companions(
             ),
             AICompanionRead(
                 id=uuid.uuid4(),
-                user_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                user_id=uuid.UUID(str(DEV_OWNER_ID)),
                 name="Another Companion",
                 description="Another test companion",
                 personality=None,
@@ -111,7 +139,7 @@ async def list_ai_companions(
     )
 
 
-@router.post("/ai-companions", status_code=status.HTTP_201_CREATED)
+@router.post("/ai-companions", response_model=AICompanionRead, status_code=status.HTTP_201_CREATED)
 async def create_ai_companion(
     payload: AICompanionCreate,
     current_user: dict = Depends(get_current_user),
@@ -122,9 +150,6 @@ async def create_ai_companion(
     """
     if settings.DEV_MODE:
         # Basic validation already enforced by schema; set defaults
-        from datetime import datetime, timezone
-        import uuid
-
         now = datetime.now(timezone.utc)
         # Simulate duplicate name conflict
         if payload.name == "ExistingCompanion":
@@ -132,39 +157,27 @@ async def create_ai_companion(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Companion name already exists",
             )
-        companion = {
-            "id": str(uuid.uuid4()),
-            "user_id": str(current_user.get("id")),
-            "name": payload.name,
-            "description": payload.description,
-            "personality": payload.personality.model_dump() if payload.personality else {},
-            "voice_profile": payload.voice_profile.model_dump() if payload.voice_profile else {},
-            "character_asset": payload.character_asset.model_dump() if payload.character_asset else {},
-            "preferences": payload.preferences.model_dump() if payload.preferences else {},
-            "status": payload.status or "active",
-            "created_at": now.isoformat(),
-            "updated_at": now.isoformat(),
-        }
-
-        from fastapi import Response
-
-        resp = Response(content=None)
-        # Location header
-        resp.headers["Location"] = f"/ai-companions/{companion['id']}"
-        # Return JSON body
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=status.HTTP_201_CREATED, content=companion, headers={
-            "Location": f"/ai-companions/{companion['id']}"
-        })
+        companion_id = str(uuid.uuid4())
+        
+        return AICompanionRead(
+            id=companion_id,
+            user_id=str(current_user.get("id")),
+            name=payload.name,
+            description=payload.description,
+            personality=payload.personality.model_dump() if payload.personality else {},
+            voice_profile=payload.voice_profile.model_dump() if payload.voice_profile else {},
+            character_asset=payload.character_asset.model_dump() if payload.character_asset else {},
+            preferences=payload.preferences.model_dump() if payload.preferences else {},
+            status=payload.status or "active",
+            created_at=now,
+            updated_at=now,
+        )
 
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="AI companion creation not implemented in production mode yet",
     )
 
-
-UUID_RE = re.compile(r"^[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}$")
 
 @router.get("/ai-companions/{companion_id}")
 async def get_ai_companion(
@@ -175,22 +188,19 @@ async def get_ai_companion(
         now = datetime.now(timezone.utc)
 
         # --- ID validation ---
-        if not companion_id or companion_id.strip() != companion_id or any(ch.isspace() for ch in companion_id):
-            raise HTTPException(status_code=422, detail="Invalid companion id format")
-        if not UUID_RE.match(companion_id) and companion_id not in {"companion_123", "forbidden_999"} and not companion_id.startswith("nonexistent"):
-            raise HTTPException(status_code=422, detail="Invalid companion id format")
+        validate_companion_id(companion_id)
 
         # --- Not found ---
-        if companion_id.startswith("nonexistent"):
+        if companion_id.startswith(DEV_NONEXISTENT_PREFIX):
             raise HTTPException(status_code=404, detail="AI Companion not found")
 
         # --- Forbidden test case ---
-        if companion_id == "forbidden_999":
+        if companion_id == DEV_FORBIDDEN_ID:
             raise HTTPException(status_code=403, detail="Forbidden")
 
         # --- Happy path ---
-        if companion_id == "companion_123":
-            owner_id = "00000000-0000-0000-0000-000000000000"
+        if companion_id == DEV_KNOWN_COMPANION_ID:
+            owner_id = str(DEV_OWNER_ID)
             if str(current_user.get("id")) != owner_id:
                 raise HTTPException(status_code=403, detail="Forbidden")
             return {
@@ -231,7 +241,7 @@ async def get_ai_companion(
     raise HTTPException(status_code=501, detail="Not implemented")
 
 
-@router.put("/ai-companions/{companion_id}")
+@router.put("/ai-companions/{companion_id}", response_model=AICompanionRead)
 async def update_ai_companion(
     companion_id: str = Path(..., description="AI Companion identifier"),
     payload: AICompanionUpdate = ...,
@@ -241,26 +251,23 @@ async def update_ai_companion(
     Update an AI companion by ID for the authenticated user.
     Allows updating name, description, personality, preferences, and status.
     """
-    if settings.DEV_MODE:
+    if settings.DEV_MODE: 
         now = datetime.now(timezone.utc)
 
         # --- ID validation ---
-        if not companion_id or companion_id.strip() != companion_id or any(ch.isspace() for ch in companion_id):
-            raise HTTPException(status_code=422, detail="Invalid companion id format")
-        if not UUID_RE.match(companion_id) and companion_id not in {"companion_123", "forbidden_999"} and not companion_id.startswith("nonexistent"):
-            raise HTTPException(status_code=422, detail="Invalid companion id format")
+        validate_companion_id(companion_id)
 
         # --- Not found ---
-        if companion_id.startswith("nonexistent"):
+        if companion_id.startswith(DEV_NONEXISTENT_PREFIX):
             raise HTTPException(status_code=404, detail="AI Companion not found")
 
         # --- Forbidden test case ---
-        if companion_id == "forbidden_999":
+        if companion_id == DEV_FORBIDDEN_ID:
             raise HTTPException(status_code=403, detail="Forbidden")
 
         # --- Happy path ---
-        if companion_id == "companion_123":
-            owner_id = "00000000-0000-0000-0000-000000000000"
+        if companion_id == DEV_KNOWN_COMPANION_ID:
+            owner_id = str(DEV_OWNER_ID)
             if str(current_user.get("id")) != owner_id:
                 raise HTTPException(status_code=403, detail="Forbidden")
             
@@ -283,39 +290,75 @@ async def update_ai_companion(
                 )
             
             # Simulate update by returning updated data
-            updated_companion = {
-                "id": companion_id,
-                "user_id": owner_id,
-                "name": update_data.get("name", "Test Assistant"),
-                "description": update_data.get("description", "A helpful AI assistant for testing"),
-                "personality": update_data.get("personality", {
+            return AICompanionRead(
+                id=companion_id,
+                user_id=owner_id,
+                name=update_data.get("name", "Test Assistant"),
+                description=update_data.get("description", "A helpful AI assistant for testing"),
+                personality=update_data.get("personality", {
                     "traits": ["friendly", "helpful", "curious"],
                     "communication_style": "casual",
                     "humor_level": 0.7,
                     "empathy_level": 0.9,
                 }),
-                "voice_profile": update_data.get("voice_profile", {
+                voice_profile=update_data.get("voice_profile", {
                     "voice_id": "test_voice_1",
                     "speed": 1.0,
                     "pitch": 1.0,
                     "volume": 0.8,
                 }),
-                "character_asset": update_data.get("character_asset", {
+                character_asset=update_data.get("character_asset", {
                     "model_id": "avatar_v1",
                     "animations": ["idle", "talking", "listening"],
                     "emotions": ["happy", "sad", "excited", "calm"],
                 }),
-                "preferences": update_data.get("preferences", {
+                preferences=update_data.get("preferences", {
                     "conversation_topics": ["technology", "health", "travel"],
                     "response_length": "medium",
                     "formality_level": "neutral",
                 }),
-                "status": update_data.get("status", "active"),
-                "created_at": "2024-01-01T00:00:00Z",  # Mock created_at
-                "updated_at": now.isoformat(),
-            }
+                status=update_data.get("status", "active"),
+                created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),  # Mock created_at
+                updated_at=now,
+            )
+
+        # --- Default ---
+        raise HTTPException(status_code=404, detail="AI Companion not found")
+
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.delete("/ai-companions/{companion_id}", response_model=DeleteResponse)
+async def delete_ai_companion(
+    companion_id: str = Path(..., description="AI Companion identifier"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Delete an AI companion by ID for the authenticated user.
+    """
+    if settings.DEV_MODE:
+        # --- ID validation ---
+        validate_companion_id(companion_id)
+
+        # --- Not found ---
+        if companion_id.startswith(DEV_NONEXISTENT_PREFIX):
+            raise HTTPException(status_code=404, detail="AI Companion not found")
+
+        # --- Forbidden test case ---
+        if companion_id == DEV_FORBIDDEN_ID:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        # --- Happy path ---
+        if companion_id == DEV_KNOWN_COMPANION_ID:
+            owner_id = str(DEV_OWNER_ID)
+            if str(current_user.get("id")) != owner_id:
+                raise HTTPException(status_code=403, detail="Forbidden")
             
-            return updated_companion
+            # Simulate successful deletion
+            return DeleteResponse(
+                message="AI Companion deleted successfully",
+                deleted_id=companion_id
+            )
 
         # --- Default ---
         raise HTTPException(status_code=404, detail="AI Companion not found")

@@ -86,3 +86,9 @@ class AICompanionUpdate(BaseModel):
 
     class Config:
         extra = "forbid"
+
+
+class DeleteResponse(BaseModel):
+    """Response model for DELETE /ai-companions/{id} endpoint"""
+    message: str
+    deleted_id: str

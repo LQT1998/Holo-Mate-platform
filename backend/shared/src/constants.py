@@ -19,6 +19,10 @@ DEV_KNOWN_COMPANION_ID = "companion_123"
 DEV_FORBIDDEN_ID = "forbidden_999"
 DEV_NONEXISTENT_PREFIX = "nonexistent"
 
+# Mock Data (use datetime objects, not strings)
+MOCK_CREATED_AT = datetime(2024, 1, 1, tzinfo=timezone.utc)
+MOCK_UPDATED_AT = datetime.now(timezone.utc)
+
 # === Mock Data ===
 
 # Mock Personality
