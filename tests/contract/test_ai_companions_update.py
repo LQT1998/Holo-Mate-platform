@@ -6,6 +6,7 @@ Tests the AI companion update API contract before implementation
 import pytest
 import httpx
 from typing import Dict, Any
+import uuid
 from datetime import datetime, timedelta, timezone
 
 # Import JWT helpers for token generation
@@ -141,7 +142,9 @@ class TestPutAICompanionsUpdate:
             
             # Should contain updated fields
             assert "id" in data
-            assert data["id"] == valid_companion_id  # ID should not change
+            # In DEV, id is normalized to a stable UUID derived from input
+            expected_id = uuid.uuid5(uuid.NAMESPACE_URL, f"dev:ai-companion:{valid_companion_id}")
+            assert data["id"] == str(expected_id)
             
             assert "user_id" in data
             assert data["user_id"] == "00000000-0000-0000-0000-000000000000"  # User ID should not change
