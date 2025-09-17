@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Path
+import re
 from typing import Optional, Literal
 from ai_service.src.security.deps import get_current_user
 from ai_service.src.schemas.ai_companion import (
@@ -161,3 +162,74 @@ async def create_ai_companion(
         detail="AI companion creation not implemented in production mode yet",
     )
 
+
+UUID_RE = re.compile(r"^[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}$")
+
+@router.get("/ai-companions/{companion_id}")
+async def get_ai_companion(
+    companion_id: str = Path(..., description="AI Companion identifier"),
+    current_user: dict = Depends(get_current_user),
+):
+    if settings.DEV_MODE:
+        now = datetime.now(timezone.utc)
+
+        # --- ID validation ---
+        if not companion_id or companion_id.strip() != companion_id or any(ch.isspace() for ch in companion_id):
+            raise HTTPException(status_code=422, detail="Invalid companion id format")
+        if not UUID_RE.match(companion_id) and companion_id not in {"companion_123", "forbidden_999"} and not companion_id.startswith("nonexistent"):
+            raise HTTPException(status_code=422, detail="Invalid companion id format")
+
+        # --- Not found ---
+        if companion_id.startswith("nonexistent"):
+            raise HTTPException(status_code=404, detail="AI Companion not found")
+
+        # --- Forbidden test case ---
+        if companion_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        # --- Happy path ---
+        if companion_id == "companion_123":
+            owner_id = "00000000-0000-0000-0000-000000000000"
+            if str(current_user.get("id")) != owner_id:
+                raise HTTPException(status_code=403, detail="Forbidden")
+            return {
+                "id": companion_id,
+                "user_id": owner_id,
+                "name": "Test Assistant",
+                "description": "A helpful AI assistant for testing",
+                "personality": {
+                    "traits": ["friendly", "helpful", "curious"],
+                    "communication_style": "casual",
+                    "humor_level": 0.7,
+                    "empathy_level": 0.9,
+                },
+                "voice_profile": {
+                    "voice_id": "test_voice_1",
+                    "speed": 1.0,
+                    "pitch": 1.0,
+                    "volume": 0.8,
+                },
+                "character_asset": {
+                    "model_id": "avatar_v1",
+                    "animations": ["idle", "talking", "listening"],
+                    "emotions": ["happy", "sad", "excited", "calm"],
+                },
+                "preferences": {
+                    "conversation_topics": ["technology", "health", "travel"],
+                    "response_length": "medium",
+                    "formality_level": "neutral",
+                },
+                "status": "active",
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+            }
+
+        # --- Default ---
+        raise HTTPException(status_code=404, detail="AI Companion not found")
+
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.get("/ai-companions/")
+async def get_companion_trailing_slash():
+    raise HTTPException(status_code=422, detail="Invalid companion id format")

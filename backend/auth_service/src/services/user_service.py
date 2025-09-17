@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from shared.src.models.user import User
 from shared.src.schemas.user import UserCreate  # giả định bạn có schema này
-from auth_service.src.security.utils import get_password_hash
+from shared.src.security.utils import get_password_hash
 
 
 class UserService:
