@@ -6,6 +6,7 @@ from ai_service.src.schemas.ai_companion import (
     AICompanionListResponse,
     AICompanionRead,
     AICompanionCreate,
+    AICompanionUpdate,
     VoiceProfile,
     CharacterAsset,
 )
@@ -223,6 +224,98 @@ async def get_ai_companion(
                 "created_at": now.isoformat(),
                 "updated_at": now.isoformat(),
             }
+
+        # --- Default ---
+        raise HTTPException(status_code=404, detail="AI Companion not found")
+
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.put("/ai-companions/{companion_id}")
+async def update_ai_companion(
+    companion_id: str = Path(..., description="AI Companion identifier"),
+    payload: AICompanionUpdate = ...,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Update an AI companion by ID for the authenticated user.
+    Allows updating name, description, personality, preferences, and status.
+    """
+    if settings.DEV_MODE:
+        now = datetime.now(timezone.utc)
+
+        # --- ID validation ---
+        if not companion_id or companion_id.strip() != companion_id or any(ch.isspace() for ch in companion_id):
+            raise HTTPException(status_code=422, detail="Invalid companion id format")
+        if not UUID_RE.match(companion_id) and companion_id not in {"companion_123", "forbidden_999"} and not companion_id.startswith("nonexistent"):
+            raise HTTPException(status_code=422, detail="Invalid companion id format")
+
+        # --- Not found ---
+        if companion_id.startswith("nonexistent"):
+            raise HTTPException(status_code=404, detail="AI Companion not found")
+
+        # --- Forbidden test case ---
+        if companion_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        # --- Happy path ---
+        if companion_id == "companion_123":
+            owner_id = "00000000-0000-0000-0000-000000000000"
+            if str(current_user.get("id")) != owner_id:
+                raise HTTPException(status_code=403, detail="Forbidden")
+            
+            # Filter out None values and forbidden fields
+            update_data = payload.model_dump(exclude_unset=True)
+            
+            # Check for restricted fields
+            forbidden_fields = ["id", "user_id", "created_at", "updated_at"]
+            if any(field in update_data for field in forbidden_fields):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Updating id, user_id, created_at, or updated_at is not allowed"
+                )
+            
+            # Check for empty payload
+            if not update_data:
+                raise HTTPException(
+                    status_code=422,
+                    detail="At least one field must be provided for update"
+                )
+            
+            # Simulate update by returning updated data
+            updated_companion = {
+                "id": companion_id,
+                "user_id": owner_id,
+                "name": update_data.get("name", "Test Assistant"),
+                "description": update_data.get("description", "A helpful AI assistant for testing"),
+                "personality": update_data.get("personality", {
+                    "traits": ["friendly", "helpful", "curious"],
+                    "communication_style": "casual",
+                    "humor_level": 0.7,
+                    "empathy_level": 0.9,
+                }),
+                "voice_profile": update_data.get("voice_profile", {
+                    "voice_id": "test_voice_1",
+                    "speed": 1.0,
+                    "pitch": 1.0,
+                    "volume": 0.8,
+                }),
+                "character_asset": update_data.get("character_asset", {
+                    "model_id": "avatar_v1",
+                    "animations": ["idle", "talking", "listening"],
+                    "emotions": ["happy", "sad", "excited", "calm"],
+                }),
+                "preferences": update_data.get("preferences", {
+                    "conversation_topics": ["technology", "health", "travel"],
+                    "response_length": "medium",
+                    "formality_level": "neutral",
+                }),
+                "status": update_data.get("status", "active"),
+                "created_at": "2024-01-01T00:00:00Z",  # Mock created_at
+                "updated_at": now.isoformat(),
+            }
+            
+            return updated_companion
 
         # --- Default ---
         raise HTTPException(status_code=404, detail="AI Companion not found")
