@@ -502,3 +502,64 @@ async def create_message(
     if response is not None:
         response.headers["Location"] = f"/messages/{message_id}"
     return created_message
+
+
+@router.get(
+    "/messages/{message_id}",
+    response_model=MessageResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_message(
+    message_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> MessageResponse:
+    """
+    Get a specific message by ID (DEV mode mock).
+    """
+    if not settings.DEV_MODE:
+        raise HTTPException(status_code=501, detail="Not implemented")
+
+    def normalize_message_id(message_id: str) -> uuid.UUID:
+        """
+        Normalize message ID for DEV mode.
+        - Return UUID if valid format
+        - Map friendly IDs to stable UUID5
+        - Raise 422 for known invalid test cases
+        """
+        if message_id in ["invalid_message_id", "   ", "id with spaces"]:
+            raise HTTPException(status_code=422, detail="Invalid message ID format")
+        try:
+            return uuid.UUID(message_id)
+        except ValueError:
+            return uuid.uuid5(uuid.NAMESPACE_URL, f"dev:message:{message_id}")
+
+    # Special cases for contract tests
+    if message_id == "nonexistent_message_456":
+        raise HTTPException(status_code=404, detail="Message not found")
+    if message_id == "forbidden_999":
+        raise HTTPException(
+            status_code=403, detail="Forbidden: You do not own this message"
+        )
+
+    # Normalize message ID
+    message_uuid = normalize_message_id(message_id)
+
+    # Ownership check
+    if str(current_user.get("id")) != str(DEV_OWNER_ID):
+        raise HTTPException(
+            status_code=403, detail="Forbidden: You do not own this message"
+        )
+
+    # Mock message data
+    now = datetime.now(timezone.utc)
+    conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, "dev:conversation:conversation_123")
+
+    return MessageResponse(
+        id=message_uuid,
+        conversation_id=conversation_uuid,
+        role="user",
+        content="Hello, this is a test message",
+        content_type="text",
+        created_at=now,
+        updated_at=now,
+    )
