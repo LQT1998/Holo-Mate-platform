@@ -91,6 +91,9 @@
 - [ ] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py
 - [ ] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py
 
+### New Contract tests for Streaming Service
+- [✓] T040b [P] Contract test POST /streaming/sessions in tests/contract/test_streaming_sessions.py
+
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 
 ### Data Models (Entities)
@@ -138,8 +141,9 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T082 PUT /conversations/{id} endpoint in backend/ai_service/src/api/conversations.py
 - [✓] T083 GET /conversations/{id}/messages endpoint in backend/ai_service/src/api/conversations.py
 - [✓] T084 POST /messages endpoint in backend/ai_service/src/api/conversations.py
-- [✓] T085 GET /messages/{id} endpoint in backend/ai_service/src/api/conversations.py
-- [ ] T085b DELETE /messages/{id} endpoint in backend/ai_service/src/api/conversations.py
+- [✓] T085 GET /messages/{id} endpoint in backend/ai_service/src/api/messages.py
+- [✓] T085b DELETE /messages/{id} endpoint in backend/ai_service/src/api/messages.py
+- [✓] T085c POST /streaming/sessions endpoint in backend/streaming_service/src/api/sessions.py
 - [ ] T086 GET /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T087 POST /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
@@ -266,37 +270,36 @@ Task: "DeviceService in backend/streaming_service/src/services/device_service.py
 - Use real dependencies in integration tests
 - Maintain constitutional principles throughout
 
-## Current Status (Updated: 2025-01-18)
+## Current Status (Updated: 2025-09-18)
 
 ### ✅ Completed Tasks
-**Phase 3.2: Contract Tests (T014-T026)** - 100% Complete
-- All contract tests for Auth, Users, AI Companions, and Conversations have been implemented and are passing
-- Total: 138 tests passing, 1 skipped (unauthorized access test not applicable in current mock implementation)
+**Phase 3.2: Contract Tests**
+- Auth, Users, AI Companions, Conversations, Messages, Streaming Sessions.
+- Total: 194 tests (192 passed, 2 skipped).
 
-**Phase 3.3: API Endpoints (T070-T082)** - 90% Complete
-- ✅ Auth Service: T070-T073 (Login, Refresh, Users/me, Users/me update)
-- ✅ AI Service: T074-T078 (AI Companions CRUD)
-- ✅ AI Service: T079-T082 (Conversations List, Create, Get by ID, Update)
-- ❌ Pending: T083 (GET /conversations/{id}/messages) - Not implemented yet
+**Phase 3.3: API Endpoints**
+- ✅ Auth Service: T070-T073
+- ✅ AI Service (Companions): T074-T078
+- ✅ AI Service (Conversations & Messages): T079-T085b
+- ✅ Streaming Service: T085c (POST /streaming/sessions)
 
 ### 🎯 Next Priority Tasks
-1. **T083** - Implement GET /conversations/{id}/messages endpoint
-2. **T027** - Create contract test for messages list
-3. **T049** - Implement Conversation model (currently using mock data)
-4. **T084** - Implement POST /streaming/chat endpoint
+1.  **T086** - Implement GET /devices endpoint.
+2.  **T030** - Create contract test for GET /devices.
+3.  **T051** - Implement HologramDevice model.
 
 ### 📊 Test Results Summary
-- **Total Tests**: 155 (154 passed, 1 skipped)
+- **Total Tests**: 194 (192 passed, 2 skipped)
 - **Auth Service**: 34 tests ✅
-- **AI Companions**: 55 tests ✅  
-- **Conversations**: 66 tests ✅ (65 passed, 1 skipped)
-- **Coverage**: All implemented endpoints have comprehensive test coverage
+- **AI Companions**: 55 tests ✅
+- **Conversations & Messages**: 100 tests ✅
+- **Streaming Service**: 5 tests ✅ (1 skipped)
 
 ### 🔧 Technical Notes
-- All endpoints use DEV mode with mock data
-- UUID normalization implemented for consistent ID handling
-- Refactored conversations.py with clean code and helper functions
-- No regressions detected in existing functionality
+- All endpoints use DEV mode with mock data.
+- Separated message endpoints into `ai_service/src/api/messages.py`.
+- Created new `streaming_service` with initial `/sessions` endpoint.
+- No regressions detected in existing functionality.
 
 ## Task Generation Rules
 *Applied during main() execution*
