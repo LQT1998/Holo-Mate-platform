@@ -13,6 +13,7 @@ class MessageCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=10000)
     role: str = Field(..., pattern="^(user|companion)$")
     content_type: str = Field(default="text", pattern="^(text|audio_url)$")
+    conversation_id: str = Field(..., description="ID of the conversation this message belongs to")
 
 
 class MessageResponse(BaseModel):

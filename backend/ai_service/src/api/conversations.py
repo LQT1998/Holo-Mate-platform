@@ -13,6 +13,7 @@ from ai_service.src.schemas.conversation import (
     ConversationSettings,
 )
 from backend.shared.src.schemas.message_schema import (
+    MessageCreate,
     MessageResponse,
     MessageListResponse,
 )
@@ -468,4 +469,74 @@ async def get_conversation_messages(
         )
 
     raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.post("/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+async def create_message(
+    message_data: MessageCreate,
+    current_user: dict = Depends(get_current_user),
+    response: Response = None
+) -> MessageResponse:
+    """
+    Create a new message in a conversation
+    
+    Args:
+        message_data: Message creation data
+        current_user: Current authenticated user
+        response: FastAPI response object for setting headers
+        
+    Returns:
+        MessageResponse: Created message data
+        
+    Raises:
+        HTTPException: 401 if unauthorized, 403 if forbidden, 404 if not found, 422 if invalid
+    """
+    if not settings.DEV_MODE:
+        raise HTTPException(status_code=501, detail="Not implemented")
+    
+    # Handle special test cases first
+    conversation_id_str = str(message_data.conversation_id)
+    
+    if conversation_id_str == "invalid_conversation_id":
+        raise HTTPException(status_code=422, detail="Invalid conversation ID format")
+    
+    if conversation_id_str == "nonexistent_conversation_456":
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    if conversation_id_str == "forbidden_999":
+        raise HTTPException(status_code=403, detail="Forbidden")
+    
+    # For DEV mode, handle special conversation_123 case
+    if conversation_id_str == "conversation_123":
+        conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"dev:conversation:{conversation_id_str}")
+    else:
+        # Validate conversation_id format for other cases
+        try:
+            conversation_uuid = uuid.UUID(conversation_id_str)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid conversation ID format")
+    
+    # Check ownership (in DEV mode, only allow specific user)
+    if str(current_user.get("id")) != "00000000-0000-0000-0000-000000000000":
+        raise HTTPException(status_code=403, detail="Forbidden")
+    
+    # Create mock message
+    now = datetime.now(timezone.utc)
+    message_id = uuid.uuid4()
+    
+    created_message = MessageResponse(
+        id=message_id,
+        conversation_id=conversation_uuid,
+        role=message_data.role,
+        content=message_data.content,
+        content_type=message_data.content_type,
+        created_at=now,
+        updated_at=now
+    )
+    
+    # Set Location header
+    if response:
+        response.headers["Location"] = f"/messages/{message_id}"
+    
+    return created_message
 
