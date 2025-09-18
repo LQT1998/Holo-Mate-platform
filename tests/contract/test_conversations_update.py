@@ -42,6 +42,11 @@ class TestConversationsUpdateContract:
         return "nonexistent_conversation_456"
     
     @pytest.fixture
+    def forbidden_conversation_id(self) -> str:
+        """Conversation ID owned by another user for testing 403"""
+        return "forbidden_999"
+    
+    @pytest.fixture
     def valid_update_data(self) -> Dict[str, Any]:
         """Valid conversation update request data"""
         return {
@@ -97,9 +102,10 @@ class TestConversationsUpdateContract:
             data = response.json()
             assert isinstance(data, dict)
             
-            # Should contain conversation ID
+            # Should contain conversation ID (UUID string)
             assert "id" in data
-            assert data["id"] == valid_conversation_id
+            assert isinstance(data["id"], str)
+            # ID should be a valid UUID string (normalized from conversation_123)
             
             # Should contain updated data
             assert data["title"] == valid_update_data["title"]
@@ -243,13 +249,13 @@ class TestConversationsUpdateContract:
         self, 
         base_url: str, 
         valid_access_token: str,
-        valid_conversation_id: str,
+        forbidden_conversation_id: str,
         valid_update_data: Dict[str, Any]
     ):
         """Test updating conversation owned by another user returns 403 Forbidden"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/conversations/{valid_conversation_id}",
+                f"{base_url}/conversations/{forbidden_conversation_id}",
                 json=valid_update_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",

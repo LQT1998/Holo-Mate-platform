@@ -5,6 +5,7 @@ Tests the conversation creation API contract before implementation
 
 import pytest
 import httpx
+import uuid
 from typing import Dict, Any
 
 
@@ -31,7 +32,7 @@ class TestConversationsCreateContract:
         """Valid conversation creation request data"""
         return {
             "title": "My First Conversation",
-            "companion_id": "companion_123",
+            "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")),
             "initial_message": "Hello, how are you today?",
             "settings": {
                 "voice_enabled": True,
@@ -45,7 +46,7 @@ class TestConversationsCreateContract:
     def minimal_conversation_data(self) -> Dict[str, Any]:
         """Minimal conversation creation request data"""
         return {
-            "companion_id": "companion_123"
+            "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123"))
         }
     
     @pytest.fixture
@@ -265,7 +266,7 @@ class TestConversationsCreateContract:
             response = await client.post(
                 f"{base_url}/conversations",
                 json={
-                    "companion_id": "nonexistent_companion_456",
+                    "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:nonexistent_companion_456")),
                     "title": "Test Conversation"
                 },
                 headers={
@@ -295,7 +296,7 @@ class TestConversationsCreateContract:
             response = await client.post(
                 f"{base_url}/conversations",
                 json={
-                    "companion_id": "other_user_companion_789",
+                    "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:other_user_companion_789")),
                     "title": "Test Conversation"
                 },
                 headers={
@@ -374,15 +375,15 @@ class TestConversationsCreateContract:
         """Test conversation creation validation rules"""
         test_cases = [
             # Empty title
-            {"title": "", "companion_id": "companion_123"},
+            {"title": "", "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123"))},
             # Title too long
-            {"title": "x" * 256, "companion_id": "companion_123"},
+            {"title": "x" * 256, "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123"))},
             # Invalid companion ID format
             {"title": "Valid Title", "companion_id": ""},
             # Invalid settings values
-            {"title": "Valid Title", "companion_id": "companion_123", "settings": {"voice_enabled": "invalid"}},
+            {"title": "Valid Title", "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")), "settings": {"voice_enabled": "invalid"}},
             # Message too long
-            {"title": "Valid Title", "companion_id": "companion_123", "initial_message": "x" * 5001},
+            {"title": "Valid Title", "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")), "initial_message": "x" * 5001},
         ]
         
         for test_data in test_cases:
@@ -416,7 +417,7 @@ class TestConversationsCreateContract:
                 f"{base_url}/conversations",
                 json={
                     "title": "Test Conversation",
-                    "companion_id": "companion_123",
+                    "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")),
                     "settings": {
                         "voice_enabled": "invalid_boolean",  # Invalid boolean
                         "emotion_detection": 123,  # Invalid boolean
@@ -478,7 +479,7 @@ class TestConversationsCreateContract:
             response = await client.post(
                 f"{base_url}/conversations",
                 json={
-                    "companion_id": "companion_123",
+                    "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")),
                     "initial_message": "Hello, how are you today?"
                 },
                 headers={
@@ -510,7 +511,7 @@ class TestConversationsCreateContract:
                 f"{base_url}/conversations",
                 json={
                     "title": "Test Conversation",
-                    "companion_id": "companion_123",
+                    "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")),
                     "initial_message": "Hello, this is my first message!"
                 },
                 headers={
@@ -542,7 +543,7 @@ class TestConversationsCreateContract:
                 f"{base_url}/conversations",
                 json={
                     "title": "Test Conversation",
-                    "companion_id": "companion_123"
+                    "companion_id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123"))
                 },
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
