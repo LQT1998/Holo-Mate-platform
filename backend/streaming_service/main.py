@@ -5,12 +5,13 @@ Real-time voice processing and WebSocket handling
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.exceptions import AppError, app_error_handler
 import uvicorn
+
+from streaming_service.src.api import sessions
 
 app = FastAPI(
     title="Holo-Mate Streaming Service",
-    description="Real-time voice processing and WebSocket handling for Holo-Mate platform",
+    description="Handles device streaming sessions for the Holo-Mate platform",
     version="1.0.0"
 )
 
@@ -23,9 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Exception handlers
-app.add_exception_handler(AppError, app_error_handler)
-
 @app.get("/")
 async def root():
     return {"message": "Holo-Mate Streaming Service", "status": "running"}
@@ -34,5 +32,8 @@ async def root():
 async def health_check():
     return {"status": "healthy", "service": "streaming_service"}
 
+# Routers
+app.include_router(sessions.router)
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8003)

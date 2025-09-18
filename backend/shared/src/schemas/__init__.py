@@ -67,6 +67,12 @@ from .auth import (
     Token,
 )
 
+from .streaming_session_schema import (
+    StreamingSessionCreate,
+    StreamingSessionRead,
+    StreamingSessionListResponse,
+)
+
 __all__ = [
     # User schemas
     "UserBase",
@@ -93,6 +99,10 @@ __all__ = [
     "MessageCreate",
     "MessageResponse",
     "MessageListResponse",
+    # Streaming Session Schemas
+    "StreamingSessionCreate",
+    "StreamingSessionRead",
+    "StreamingSessionListResponse",
     # Device schemas
     "DeviceCreate",
     "DeviceUpdate",

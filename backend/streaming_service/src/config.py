@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     ENV: str = "dev"
+    DEV_MODE: bool = True
+    AUTH_ENABLED: bool = False
 
     DATABASE_URL: AnyUrl | None = None
     REDIS_URL: AnyUrl | None = None
