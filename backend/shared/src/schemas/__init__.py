@@ -33,6 +33,7 @@ from .conversation_schema import (
 from .message_schema import (
     MessageCreate,
     MessageResponse,
+    MessageListResponse,
 )
 
 # Device schemas
@@ -91,6 +92,7 @@ __all__ = [
     # Message schemas
     "MessageCreate",
     "MessageResponse",
+    "MessageListResponse",
     # Device schemas
     "DeviceCreate",
     "DeviceUpdate",

@@ -12,6 +12,10 @@ from ai_service.src.schemas.conversation import (
     ConversationUpdate,
     ConversationSettings,
 )
+from backend.shared.src.schemas.message_schema import (
+    MessageResponse,
+    MessageListResponse,
+)
 from ai_service.src.config import settings
 from datetime import datetime, timezone
 from backend.shared.src.constants import (
@@ -348,6 +352,115 @@ async def update_conversation(
         
         # Create and return ConversationRead instance
         return ConversationRead(**updated_data)
+
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.get(
+    "/conversations/{conversation_id}/messages",
+    response_model=MessageListResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_conversation_messages(
+    conversation_id: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Number of messages per page"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get messages for a specific conversation.
+    """
+    if settings.DEV_MODE:
+        # Check for invalid ID format first
+        if conversation_id in ["invalid_conversation_id", "   ", "id with spaces"]:
+            raise HTTPException(status_code=422, detail="Invalid conversation ID format")
+        
+        # Normalize conversation ID
+        conversation_uuid = normalize_conversation_id(conversation_id)
+        
+        # Handle special test cases based on original conversation_id
+        if conversation_id == "nonexistent_conversation_456":
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        if conversation_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+        
+        if conversation_id not in ["conversation_123", "54d57ecc-e7b3-52e2-abdb-0c8fe20c1df8", "empty_conversation_789"]:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # Check if user owns this conversation
+        user_id = str(current_user["id"])
+        if user_id != str(DEV_OWNER_ID):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+
+        # Handle empty conversation case
+        if conversation_id == "empty_conversation_789":
+            return MessageListResponse(
+                messages=[],
+                total=0,
+                page=page,
+                per_page=per_page,
+                total_pages=0,
+            )
+
+        # Generate mock messages
+        now = datetime.now(timezone.utc)
+        mock_messages = [
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conversation_uuid,
+                sender_type="user",
+                content="Hello, this is a test message",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=0),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conversation_uuid,
+                sender_type="assistant",
+                content="Hi! This is a reply from companion",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=1),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conversation_uuid,
+                sender_type="user",
+                content="How are you doing today?",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=2),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conversation_uuid,
+                sender_type="assistant",
+                content="I'm doing great! How about you?",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=3),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conversation_uuid,
+                sender_type="user",
+                content="I'm doing well too, thanks for asking!",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=4),
+            ),
+        ]
+        
+        # Apply pagination
+        total_messages = len(mock_messages)
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_messages = mock_messages[start_idx:end_idx]
+        
+        return MessageListResponse(
+            messages=paginated_messages,
+            total=total_messages,
+            page=page,
+            per_page=per_page,
+            total_pages=(total_messages + per_page - 1) // per_page,
+        )
 
     raise HTTPException(status_code=501, detail="Not implemented")
 

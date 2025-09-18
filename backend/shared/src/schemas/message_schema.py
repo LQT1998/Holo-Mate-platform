@@ -3,7 +3,7 @@ Pydantic schemas for Message entity
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 import uuid
 
@@ -26,3 +26,12 @@ class MessageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MessageListResponse(BaseModel):
+    """Schema for message list response with pagination"""
+    messages: List[MessageResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
