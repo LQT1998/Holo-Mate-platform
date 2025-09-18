@@ -83,7 +83,7 @@ class TestConversationMessages:
             first_message = messages[0]
             assert "id" in first_message
             assert "conversation_id" in first_message
-            assert "sender_type" in first_message
+            assert "role" in first_message
             assert "content" in first_message
             assert "content_type" in first_message
             assert "created_at" in first_message

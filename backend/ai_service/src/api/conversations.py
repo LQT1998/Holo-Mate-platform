@@ -406,47 +406,52 @@ async def get_conversation_messages(
         # Generate mock messages
         now = datetime.now(timezone.utc)
         mock_messages = [
-            MessageResponse(
-                id=uuid.uuid4(),
-                conversation_id=conversation_uuid,
-                sender_type="user",
-                content="Hello, this is a test message",
-                content_type="text",
-                created_at=now.replace(hour=10, minute=0),
-            ),
-            MessageResponse(
-                id=uuid.uuid4(),
-                conversation_id=conversation_uuid,
-                sender_type="assistant",
-                content="Hi! This is a reply from companion",
-                content_type="text",
-                created_at=now.replace(hour=10, minute=1),
-            ),
-            MessageResponse(
-                id=uuid.uuid4(),
-                conversation_id=conversation_uuid,
-                sender_type="user",
-                content="How are you doing today?",
-                content_type="text",
-                created_at=now.replace(hour=10, minute=2),
-            ),
-            MessageResponse(
-                id=uuid.uuid4(),
-                conversation_id=conversation_uuid,
-                sender_type="assistant",
-                content="I'm doing great! How about you?",
-                content_type="text",
-                created_at=now.replace(hour=10, minute=3),
-            ),
-            MessageResponse(
-                id=uuid.uuid4(),
-                conversation_id=conversation_uuid,
-                sender_type="user",
-                content="I'm doing well too, thanks for asking!",
-                content_type="text",
-                created_at=now.replace(hour=10, minute=4),
-            ),
-        ]
+                MessageResponse(
+                    id=uuid.uuid4(),
+                    conversation_id=conversation_uuid,
+                    role="user",
+                    content="Hello, this is a test message",
+                    content_type="text",
+                    created_at=now.replace(hour=10, minute=0),
+                    updated_at=now.replace(hour=10, minute=0),
+                ),
+                MessageResponse(
+                    id=uuid.uuid4(),
+                    conversation_id=conversation_uuid,
+                    role="companion",
+                    content="Hi! This is a reply from companion",
+                    content_type="text",
+                    created_at=now.replace(hour=10, minute=1),
+                    updated_at=now.replace(hour=10, minute=1),
+                ),
+                MessageResponse(
+                    id=uuid.uuid4(),
+                    conversation_id=conversation_uuid,
+                    role="user",
+                    content="How are you doing today?",
+                    content_type="text",
+                    created_at=now.replace(hour=10, minute=2),
+                    updated_at=now.replace(hour=10, minute=2),
+                ),
+                MessageResponse(
+                    id=uuid.uuid4(),
+                    conversation_id=conversation_uuid,
+                    role="companion",
+                    content="I'm doing great! How about you?",
+                    content_type="text",
+                    created_at=now.replace(hour=10, minute=3),
+                    updated_at=now.replace(hour=10, minute=3),
+                ),
+                MessageResponse(
+                    id=uuid.uuid4(),
+                    conversation_id=conversation_uuid,
+                    role="user",
+                    content="I'm doing well too, thanks for asking!",
+                    content_type="text",
+                    created_at=now.replace(hour=10, minute=4),
+                    updated_at=now.replace(hour=10, minute=4),
+                ),
+            ]
         
         # Apply pagination
         total_messages = len(mock_messages)
