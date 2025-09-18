@@ -136,9 +136,10 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T080 POST /conversations endpoint in backend/ai_service/src/api/conversations.py
 - [✓] T081 GET /conversations/{id} endpoint in backend/ai_service/src/api/conversations.py
 - [✓] T082 PUT /conversations/{id} endpoint in backend/ai_service/src/api/conversations.py
-- [ ] T083 GET /conversations/{id}/messages endpoint in backend/ai_service/src/api/messages.py
-- [ ] T084 POST /streaming/chat endpoint in backend/streaming_service/src/api/streaming.py
-- [ ] T085 GET /streaming/chat/{id} endpoint in backend/streaming_service/src/api/streaming.py
+- [✓] T083 GET /conversations/{id}/messages endpoint in backend/ai_service/src/api/conversations.py
+- [✓] T084 POST /messages endpoint in backend/ai_service/src/api/conversations.py
+- [✓] T085 GET /messages/{id} endpoint in backend/ai_service/src/api/conversations.py
+- [ ] T085b DELETE /messages/{id} endpoint in backend/ai_service/src/api/conversations.py
 - [ ] T086 GET /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T087 POST /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
