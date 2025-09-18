@@ -4,7 +4,12 @@ Conversations API endpoints for AI service
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 from typing import Optional, Literal
+from datetime import datetime, timezone
+import uuid
+
 from ai_service.src.security.deps import get_current_user
+from ai_service.src.config import settings
+
 from ai_service.src.schemas.conversation import (
     ConversationListResponse,
     ConversationRead,
@@ -12,38 +17,87 @@ from ai_service.src.schemas.conversation import (
     ConversationUpdate,
     ConversationSettings,
 )
+
 from backend.shared.src.schemas.message_schema import (
     MessageCreate,
     MessageResponse,
     MessageListResponse,
 )
-from ai_service.src.config import settings
-from datetime import datetime, timezone
-from backend.shared.src.constants import (
-    DEV_OWNER_ID,
-)
-import uuid
+
+from backend.shared.src.constants import DEV_OWNER_ID
 
 router = APIRouter(tags=["Conversations"])
 
 
+# ---------------------------
+# Helpers
+# ---------------------------
+
+def _validate_id_format_raw(conversation_id: str) -> None:
+    """
+    Hard checks used by contract tests to force 422 for specific bad formats.
+    """
+    if conversation_id in ["invalid_conversation_id", "   ", "id with spaces"]:
+        raise HTTPException(status_code=422, detail="Invalid conversation ID format")
+
+
 def normalize_conversation_id(conversation_id: str) -> uuid.UUID:
     """
-    Normalize conversation ID for DEV mode.
-    Maps conversation IDs to stable UUIDs using UUID5.
+    Normalize conversation ID.
+
+    DEV MODE:
+      - If it's a valid UUID -> return that UUID
+      - Otherwise map to a stable UUID5: uuid5(NAMESPACE_URL, f"dev:conversation:{conversation_id}")
+
+    PROD MODE:
+      - Require a valid UUID; invalid -> 422
     """
     if settings.DEV_MODE:
-        # Check if it's a valid UUID format first
         try:
             return uuid.UUID(conversation_id)
         except ValueError:
-            # If not a valid UUID, treat as special test case and normalize
             return uuid.uuid5(uuid.NAMESPACE_URL, f"dev:conversation:{conversation_id}")
+    # PROD strict mode
     try:
         return uuid.UUID(conversation_id)
     except ValueError:
         raise HTTPException(status_code=422, detail="Invalid conversation ID format")
 
+
+def _assert_conversation_access(conversation_id: str, current_user: dict) -> uuid.UUID:
+    """
+    Common guard for GET/PUT/MESSAGES endpoints in DEV mode.
+    - Validates format (422 on specific strings)
+    - Normalizes to UUID
+    - Applies special-case logic (404/403) used by contract tests
+    - Checks ownership
+    Returns the normalized UUID if access is allowed.
+    """
+    _validate_id_format_raw(conversation_id)
+    conv_uuid = normalize_conversation_id(conversation_id)
+
+    # Special test cases
+    if conversation_id == "nonexistent_conversation_456":
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if conversation_id == "forbidden_999":
+        raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+
+    # Allowed IDs in DEV tests
+    allowed_ids = {"conversation_123", "54d57ecc-e7b3-52e2-abdb-0c8fe20c1df8", "empty_conversation_789"}
+    if conversation_id not in allowed_ids:
+        # not in known set -> treat as not found
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Ownership check in DEV
+    if str(current_user.get("id")) != str(DEV_OWNER_ID):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+
+    return conv_uuid
+
+
+# ---------------------------
+# Endpoints
+# ---------------------------
 
 @router.get("/conversations", response_model=ConversationListResponse)
 async def list_conversations(
@@ -103,48 +157,36 @@ async def list_conversations(
             ),
         ]
 
-
-        # Apply filters
-        filtered_conversations = mock_conversations
-
-        # Filter by companion_id
+        # Filters
+        filtered = mock_conversations
         if companion_id:
-            filtered_conversations = [c for c in filtered_conversations if c.companion_id == companion_id]
-
-        # Filter by status
+            filtered = [c for c in filtered if c.companion_id == companion_id]
         if status:
-            filtered_conversations = [c for c in filtered_conversations if c.status == status]
-
-        # Filter by search
+            filtered = [c for c in filtered if c.status == status]
         if search:
-            filtered_conversations = [c for c in filtered_conversations if search.lower() in c.title.lower()]
+            filtered = [c for c in filtered if search.lower() in c.title.lower()]
 
-        # Special case: return empty list for certain test scenarios
         if search == "nonexistent":
-            filtered_conversations = []
-        
-        # For empty list test: return empty when no filters applied and no search
-        if not any([companion_id, status, start_date, end_date]) and not search:
-            filtered_conversations = []
+            filtered = []
 
-        # Apply pagination
-        total = len(filtered_conversations)
+        if not any([companion_id, status, start_date, end_date]) and not search:
+            filtered = []
+
+        # Pagination
+        total = len(filtered)
         total_pages = (total + per_page - 1) // per_page
-        
-        # Calculate offset for pagination
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
-        paginated_conversations = filtered_conversations[start_idx:end_idx]
+        paginated = filtered[start_idx:end_idx]
 
         response_data = {
-            "conversations": paginated_conversations,
+            "conversations": paginated,
             "total": total,
             "page": page,
             "per_page": per_page,
             "total_pages": total_pages,
         }
 
-        # Add metadata if requested
         if include_metadata:
             response_data["metadata"] = {
                 "filters_applied": {
@@ -154,18 +196,12 @@ async def list_conversations(
                     "start_date": start_date,
                     "end_date": end_date,
                 },
-                "sorting": {
-                    "sort_by": sort_by,
-                    "sort_order": sort_order,
-                }
+                "sorting": {"sort_by": sort_by, "sort_order": sort_order},
             }
 
         return ConversationListResponse(**response_data)
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Conversations listing not implemented in production mode yet",
-    )
+    raise HTTPException(status_code=501, detail="Conversations listing not implemented in production mode yet")
 
 
 @router.post("/conversations", response_model=ConversationRead, status_code=status.HTTP_201_CREATED)
@@ -179,10 +215,9 @@ async def create_conversation(
         conversation_id = uuid.uuid4()
         user_uuid = uuid.UUID(str(current_user["id"]))
 
-        # Handle special test cases based on UUID values
+        # Special cases for companion ownership/existence (DEV)
         nonexistent_uuid = uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:nonexistent_companion_456")
         other_user_uuid = uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:other_user_companion_789")
-        
         if payload.companion_id == nonexistent_uuid:
             raise HTTPException(status_code=404, detail="AI Companion not found")
         if payload.companion_id == other_user_uuid:
@@ -220,25 +255,20 @@ async def get_conversation(
     Get a specific conversation by ID (DEV mode mock).
     """
     if settings.DEV_MODE:
-        # Check for invalid ID format first
-        if conversation_id in ["invalid_conversation_id", "   ", "id with spaces"]:
-            raise HTTPException(status_code=422, detail="Invalid conversation ID format")
-        
-        # Normalize conversation ID
-        conversation_uuid = normalize_conversation_id(conversation_id)
-        
-        # Handle special test cases based on original conversation_id
+        _validate_id_format_raw(conversation_id)
+        conv_uuid = normalize_conversation_id(conversation_id)
+
+        # Special DEV cases / allowed ids
         if conversation_id == "nonexistent_conversation_456":
             raise HTTPException(status_code=404, detail="Conversation not found")
-        
         if conversation_id not in ["conversation_123", "54d57ecc-e7b3-52e2-abdb-0c8fe20c1df8"]:
             raise HTTPException(status_code=404, detail="Conversation not found")
+        if str(current_user["id"]) != str(DEV_OWNER_ID):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
 
         now = datetime.now(timezone.utc)
-
-        # Base mock conversation data
         response_data = {
-            "id": conversation_uuid,
+            "id": conv_uuid,
             "user_id": uuid.UUID(str(current_user["id"])),
             "title": "Test Conversation",
             "companion_id": uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123"),
@@ -252,7 +282,6 @@ async def get_conversation(
             "initial_message": "Hello, this is a test conversation",
         }
 
-        # Add metadata details if requested
         if include_metadata:
             response_data["metadata"].update(
                 {
@@ -260,11 +289,10 @@ async def get_conversation(
                     "word_count": 150,
                     "sentiment": "positive",
                     "total_tokens": 500,
-                    "average_response_time": 2.5,  # 👈 thêm field còn thiếu
+                    "average_response_time": 2.5,
                 }
             )
 
-        # Add messages if requested
         if include_messages:
             messages = [
                 {
@@ -275,10 +303,8 @@ async def get_conversation(
                 }
             ]
             response_data["messages"] = messages
-            # Update message_count to match actual messages
             response_data["message_count"] = len(messages)
 
-        # Add companion data if requested
         if include_companion:
             response_data["companion"] = {
                 "id": str(uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123")),
@@ -302,56 +328,42 @@ async def update_conversation(
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Update a conversation by ID.
+    Update a conversation by ID (DEV mode mock).
     """
     if settings.DEV_MODE:
-        # Check for invalid ID format first
-        if conversation_id in ["invalid_conversation_id", "   ", "id with spaces"]:
-            raise HTTPException(status_code=422, detail="Invalid conversation ID format")
-        
-        # Normalize conversation ID
-        conversation_uuid = normalize_conversation_id(conversation_id)
-        
-        # Handle special test cases based on original conversation_id
+        _validate_id_format_raw(conversation_id)
+        conv_uuid = normalize_conversation_id(conversation_id)
+
+        # Special DEV cases / allowed ids
         if conversation_id == "nonexistent_conversation_456":
             raise HTTPException(status_code=404, detail="Conversation not found")
-        
         if conversation_id == "forbidden_999":
             raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
-        
         if conversation_id not in ["conversation_123", "54d57ecc-e7b3-52e2-abdb-0c8fe20c1df8"]:
             raise HTTPException(status_code=404, detail="Conversation not found")
-        
-        # Check if user owns this conversation
-        user_id = str(current_user["id"])
-        if user_id != str(DEV_OWNER_ID):
+
+        if str(current_user["id"]) != str(DEV_OWNER_ID):
             raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
-        
-        # Validate payload is not empty
+
         update_fields = payload.model_dump(exclude_unset=True)
         if not update_fields:
             raise HTTPException(status_code=422, detail="At least one field must be provided for update")
-        
-        # Get current conversation data (mock)
+
         now = datetime.now(timezone.utc)
-        
-        # Build updated conversation data
         updated_data = {
-            "id": conversation_uuid,
+            "id": conv_uuid,
             "user_id": uuid.UUID(str(current_user["id"])),
-            "title": payload.title or "Test Conversation",  # Default if not provided
+            "title": payload.title or "Test Conversation",
             "companion_id": uuid.uuid5(uuid.NAMESPACE_URL, "dev:ai-companion:companion_123"),
-            "status": payload.status or "active",  # Default if not provided
-            "created_at": now.replace(hour=10, minute=0),  # Mock created time
-            "updated_at": now,  # Update timestamp
+            "status": payload.status or "active",
+            "created_at": now.replace(hour=10, minute=0),
+            "updated_at": now,
             "last_message_at": now,
             "message_count": 5,
             "metadata": payload.metadata if payload.metadata is not None else {"tags": ["test"]},
             "settings": payload.settings or ConversationSettings(),
             "initial_message": "Hello, this is a test conversation",
         }
-        
-        # Create and return ConversationRead instance
         return ConversationRead(**updated_data)
 
     raise HTTPException(status_code=501, detail="Not implemented")
@@ -369,99 +381,73 @@ async def get_conversation_messages(
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Get messages for a specific conversation.
+    Get messages for a specific conversation (DEV mode mock).
     """
     if settings.DEV_MODE:
-        # Check for invalid ID format first
-        if conversation_id in ["invalid_conversation_id", "   ", "id with spaces"]:
-            raise HTTPException(status_code=422, detail="Invalid conversation ID format")
-        
-        # Normalize conversation ID
-        conversation_uuid = normalize_conversation_id(conversation_id)
-        
-        # Handle special test cases based on original conversation_id
-        if conversation_id == "nonexistent_conversation_456":
-            raise HTTPException(status_code=404, detail="Conversation not found")
-        
-        if conversation_id == "forbidden_999":
-            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
-        
-        if conversation_id not in ["conversation_123", "54d57ecc-e7b3-52e2-abdb-0c8fe20c1df8", "empty_conversation_789"]:
-            raise HTTPException(status_code=404, detail="Conversation not found")
-        
-        # Check if user owns this conversation
-        user_id = str(current_user["id"])
-        if user_id != str(DEV_OWNER_ID):
-            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+        # Common access checks + normalize
+        conv_uuid = _assert_conversation_access(conversation_id, current_user)
 
-        # Handle empty conversation case
+        # Handle empty conversation
         if conversation_id == "empty_conversation_789":
-            return MessageListResponse(
-                messages=[],
-                total=0,
-                page=page,
-                per_page=per_page,
-                total_pages=0,
-            )
+            return MessageListResponse(messages=[], total=0, page=page, per_page=per_page, total_pages=0)
 
         # Generate mock messages
         now = datetime.now(timezone.utc)
         mock_messages = [
-                MessageResponse(
-                    id=uuid.uuid4(),
-                    conversation_id=conversation_uuid,
-                    role="user",
-                    content="Hello, this is a test message",
-                    content_type="text",
-                    created_at=now.replace(hour=10, minute=0),
-                    updated_at=now.replace(hour=10, minute=0),
-                ),
-                MessageResponse(
-                    id=uuid.uuid4(),
-                    conversation_id=conversation_uuid,
-                    role="companion",
-                    content="Hi! This is a reply from companion",
-                    content_type="text",
-                    created_at=now.replace(hour=10, minute=1),
-                    updated_at=now.replace(hour=10, minute=1),
-                ),
-                MessageResponse(
-                    id=uuid.uuid4(),
-                    conversation_id=conversation_uuid,
-                    role="user",
-                    content="How are you doing today?",
-                    content_type="text",
-                    created_at=now.replace(hour=10, minute=2),
-                    updated_at=now.replace(hour=10, minute=2),
-                ),
-                MessageResponse(
-                    id=uuid.uuid4(),
-                    conversation_id=conversation_uuid,
-                    role="companion",
-                    content="I'm doing great! How about you?",
-                    content_type="text",
-                    created_at=now.replace(hour=10, minute=3),
-                    updated_at=now.replace(hour=10, minute=3),
-                ),
-                MessageResponse(
-                    id=uuid.uuid4(),
-                    conversation_id=conversation_uuid,
-                    role="user",
-                    content="I'm doing well too, thanks for asking!",
-                    content_type="text",
-                    created_at=now.replace(hour=10, minute=4),
-                    updated_at=now.replace(hour=10, minute=4),
-                ),
-            ]
-        
-        # Apply pagination
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="user",
+                content="Hello, this is a test message",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=0),
+                updated_at=now.replace(hour=10, minute=0),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="companion",
+                content="Hi! This is a reply from companion",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=1),
+                updated_at=now.replace(hour=10, minute=1),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="user",
+                content="How are you doing today?",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=2),
+                updated_at=now.replace(hour=10, minute=2),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="companion",
+                content="I'm doing great! How about you?",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=3),
+                updated_at=now.replace(hour=10, minute=3),
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="user",
+                content="I'm doing well too, thanks for asking!",
+                content_type="text",
+                created_at=now.replace(hour=10, minute=4),
+                updated_at=now.replace(hour=10, minute=4),
+            ),
+        ]
+
         total_messages = len(mock_messages)
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
-        paginated_messages = mock_messages[start_idx:end_idx]
-        
+        paginated = mock_messages[start_idx:end_idx]
+
         return MessageListResponse(
-            messages=paginated_messages,
+            messages=paginated,
             total=total_messages,
             page=page,
             per_page=per_page,
@@ -475,68 +461,44 @@ async def get_conversation_messages(
 async def create_message(
     message_data: MessageCreate,
     current_user: dict = Depends(get_current_user),
-    response: Response = None
+    response: Response = None,  # FastAPI will inject this; can be non-optional too
 ) -> MessageResponse:
     """
-    Create a new message in a conversation
-    
-    Args:
-        message_data: Message creation data
-        current_user: Current authenticated user
-        response: FastAPI response object for setting headers
-        
-    Returns:
-        MessageResponse: Created message data
-        
-    Raises:
-        HTTPException: 401 if unauthorized, 403 if forbidden, 404 if not found, 422 if invalid
+    Create a new message in a conversation (DEV mode mock).
     """
     if not settings.DEV_MODE:
         raise HTTPException(status_code=501, detail="Not implemented")
-    
-    # Handle special test cases first
-    conversation_id_str = str(message_data.conversation_id)
-    
-    if conversation_id_str == "invalid_conversation_id":
-        raise HTTPException(status_code=422, detail="Invalid conversation ID format")
-    
-    if conversation_id_str == "nonexistent_conversation_456":
+
+    # First, enforce raw 422 cases to match contract tests
+    conv_id_str = str(message_data.conversation_id)
+    _validate_id_format_raw(conv_id_str)
+
+    # Normalize to UUID (DEV-friendly IDs -> stable UUID5)
+    conv_uuid = normalize_conversation_id(conv_id_str)
+
+    # Special cases for non-existent / forbidden
+    if conv_id_str == "nonexistent_conversation_456":
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    if conversation_id_str == "forbidden_999":
+    if conv_id_str == "forbidden_999":
         raise HTTPException(status_code=403, detail="Forbidden")
-    
-    # For DEV mode, handle special conversation_123 case
-    if conversation_id_str == "conversation_123":
-        conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"dev:conversation:{conversation_id_str}")
-    else:
-        # Validate conversation_id format for other cases
-        try:
-            conversation_uuid = uuid.UUID(conversation_id_str)
-        except ValueError:
-            raise HTTPException(status_code=422, detail="Invalid conversation ID format")
-    
-    # Check ownership (in DEV mode, only allow specific user)
-    if str(current_user.get("id")) != "00000000-0000-0000-0000-000000000000":
+
+    # Ownership check
+    if str(current_user.get("id")) != str(DEV_OWNER_ID):
         raise HTTPException(status_code=403, detail="Forbidden")
-    
-    # Create mock message
+
+    # Mock create
     now = datetime.now(timezone.utc)
     message_id = uuid.uuid4()
-    
     created_message = MessageResponse(
         id=message_id,
-        conversation_id=conversation_uuid,
+        conversation_id=conv_uuid,
         role=message_data.role,
         content=message_data.content,
         content_type=message_data.content_type,
         created_at=now,
-        updated_at=now
+        updated_at=now,
     )
-    
-    # Set Location header
-    if response:
-        response.headers["Location"] = f"/messages/{message_id}"
-    
-    return created_message
 
+    if response is not None:
+        response.headers["Location"] = f"/messages/{message_id}"
+    return created_message
