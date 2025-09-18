@@ -105,7 +105,7 @@ def test_conversation_and_message_models(session):
 
     message = Message(
         conversation_id=conversation.id,
-        sender_type="user",
+        role="user",
         content="Hello!"
     )
     session.add(message)
@@ -114,7 +114,7 @@ def test_conversation_and_message_models(session):
     retrieved_conversation = session.query(Conversation).get(conversation.id)
     assert len(retrieved_conversation.messages) == 1
     assert retrieved_conversation.messages[0].content == "Hello!"
-    assert retrieved_conversation.messages[0].sender_type == "user"
+    assert retrieved_conversation.messages[0].role == "user"
 
 def test_device_model_creation(session):
     """Test creating a HologramDevice instance."""
@@ -186,7 +186,7 @@ def test_full_relationship_cascade(session):
     companion.conversations.append(conversation)
     user.conversations.append(conversation)
     
-    message = Message(sender_type="user", content="Cascade message")
+    message = Message(role="user", content="Cascade message")
     conversation.messages.append(message)
     
     session.add(user)
