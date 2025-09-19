@@ -14,7 +14,7 @@ from ai_service.src.schemas.ai_companion import (
     CharacterAsset,
 )
 from ai_service.src.config import settings
-from backend.shared.src.constants import (
+from shared.src.constants import (
     DEV_KNOWN_COMPANION_ID,
     DEV_FORBIDDEN_ID,
     DEV_NONEXISTENT_PREFIX,

@@ -6,6 +6,7 @@ from auth_service.src.security.deps import get_current_user
 from auth_service.src.services.user_service import UserService
 from shared.src.models.user import User
 from shared.src.schemas.user import UserRead, UserUpdate
+from shared.src.constants import DEV_OWNER_ID
 from auth_service.src.config import settings
 
 router = APIRouter(tags=["Users"])
@@ -23,7 +24,7 @@ async def get_me(
     # Dev shortcut: only active in dev mode for contract tests
     if settings.DEV_MODE and getattr(current_user, "email", None) == "test@example.com":
         return UserRead(
-            id="00000000-0000-0000-0000-000000000000",
+            id=str(DEV_OWNER_ID),
             email="test@example.com",
             first_name="Test",
             last_name="User",
@@ -86,7 +87,7 @@ async def update_me(
         for k, v in update_data.items():
             setattr(current_user, k, v)
         return UserRead(
-            id="00000000-0000-0000-0000-000000000000",
+            id=str(DEV_OWNER_ID),
             email="updated@example.com" if "email" in update_data else "test@example.com",
             first_name=getattr(current_user, "first_name", None),
             last_name=getattr(current_user, "last_name", None),

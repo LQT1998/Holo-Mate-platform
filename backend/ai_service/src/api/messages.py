@@ -9,12 +9,12 @@ import uuid
 from ai_service.src.security.deps import get_current_user
 from ai_service.src.config import settings
 
-from backend.shared.src.schemas.message_schema import (
+from shared.src.schemas.message_schema import (
     MessageCreate,
     MessageResponse,
 )
 from ai_service.src.schemas.ai_companion import DeleteResponse
-from backend.shared.src.constants import DEV_OWNER_ID
+from shared.src.constants import DEV_OWNER_ID
 
 router = APIRouter(tags=["Messages"])
 

@@ -12,6 +12,7 @@ from auth_service.src.db.session import get_db
 from auth_service.src.services.user_service import UserService
 from shared.src.models.user import User
 from shared.src.security.security import verify_access_token
+from shared.src.constants import DEV_OWNER_ID
 from auth_service.src.config import settings
 
 # Phải set auto_error=False để tránh 403 mặc định
@@ -44,7 +45,7 @@ async def get_current_user(
             if token == "test_token":
                 class MockUser:
                     def __init__(self):
-                        self.id = "00000000-0000-0000-0000-000000000000"
+                        self.id = str(DEV_OWNER_ID)
                         self.email = "test@example.com"
                         self.first_name = "Test"
                         self.last_name = "User"

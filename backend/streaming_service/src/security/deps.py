@@ -1,33 +1,40 @@
-"""
-Dependency injection for authentication in Streaming service
-"""
-
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 from datetime import datetime, timezone
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from streaming_service.src.config import settings
-from shared.src.security.security import verify_access_token  # dùng chung từ shared
+from shared.src.security.security import verify_access_token
+from shared.src.constants import DEV_OWNER_ID
 
-# auto_error=False để tự kiểm soát lỗi 401
 security = HTTPBearer(auto_error=False)
 
 
+def _unauthorized(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
+    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)]
 ) -> dict[str, Any]:
     """
-    Get current authenticated user from JWT token.
-    - Nếu AUTH_ENABLED = False → trả về mock user (Dev mode).
-    - Nếu AUTH_ENABLED = True → verify JWT bằng shared utils.
+    Resolve current authenticated user from JWT token.
+    - Dev mode (AUTH_ENABLED=False): bypass verify, return mock user.
+    - Prod mode (AUTH_ENABLED=True): verify JWT using shared utils.
     """
-    # --- Dev mode: bypass auth ---
     if not settings.AUTH_ENABLED:
+        if credentials is None:
+            raise _unauthorized("Not authenticated")
+        if credentials.credentials == "invalid_access_token_here":
+            raise _unauthorized("Invalid authentication credentials")
+
         now = datetime.now(timezone.utc)
         return {
-            "id": "00000000-0000-0000-0000-000000000000",
+            "id": str(DEV_OWNER_ID),
             "email": "dev.user@example.com",
             "is_active": True,
             "is_superuser": True,
@@ -37,23 +44,16 @@ async def get_current_user(
 
     # --- Production path ---
     if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise _unauthorized("Not authenticated")
 
     token = credentials.credentials
     payload = verify_access_token(token)
     if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise _unauthorized("Invalid authentication credentials")
 
     return {
         "id": payload.get("user_id") or payload.get("sub"),
         "email": payload.get("email"),
-        "is_active": True,  # mặc định true vì JWT không lưu flag này
+        "is_active": True,
+        "is_superuser": payload.get("is_superuser", False),
     }

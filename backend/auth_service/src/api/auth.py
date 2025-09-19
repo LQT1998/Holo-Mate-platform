@@ -19,6 +19,7 @@ from shared.src.schemas import (
     UserCreate,
     UserRead,
 )
+from shared.src.constants import DEV_OWNER_ID
 
 router = APIRouter(tags=["Authentication"])
 logger = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ async def login(
         return {
             **token_payload,
             "user": {
-                "id": "00000000-0000-0000-0000-000000000000",
+                "id": str(DEV_OWNER_ID),
                 "email": dev_email,
                 "created_at": now_iso,
                 "updated_at": now_iso,

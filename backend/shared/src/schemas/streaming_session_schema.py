@@ -3,9 +3,9 @@ Pydantic schemas for StreamingSession entity and status
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict, UUID4
+from pydantic import BaseModel, Field, ConfigDict
 from uuid import UUID
 
 
@@ -47,10 +47,20 @@ class StreamingSessionCreate(BaseModel):
     settings: Optional[Dict[str, Any]] = None
 
 
+class StreamingChatCreate(BaseModel):
+    device_id: Optional[str] = Field(None, description="Device identifier for the streaming session")
+    conversation_id: Optional[str] = Field(None, description="Conversation ID for the streaming session")
+    companion_id: Optional[str] = Field(None, description="AI Companion ID for the streaming session")
+    streaming_config: Optional[StreamingConfig] = None
+    audio_settings: Optional[AudioSettings] = None
+
+
 class StreamingSessionRead(BaseModel):
-    session_id: UUID
-    device_id: UUID
-    user_id: UUID
+    session_id: str
+    conversation_id: str
+    companion_id: str
+    device_id: str
+    user_id: str
     status: SessionStatus
     created_at: datetime
     updated_at: datetime
@@ -69,21 +79,37 @@ class StreamingSessionListResponse(BaseModel):
     total_pages: int
 
 
-# ---------- Status Schema (used in /sessions/{id}/chat) ----------
+# ---------- Status / Response Schemas ----------
 
-class StreamingSessionStatusRead(BaseModel):
-    # DEV mode cho phép string, nên để str thay vì UUID4
-    session_id: str = Field(..., description="Streaming session identifier (DEV may be non-UUID)")
-    conversation_id: UUID4
-    companion_id: UUID4
-    device_id: UUID4
+class StreamingSessionBaseResponse(BaseModel):
+    session_id: str
+    conversation_id: str
+    companion_id: str
+    device_id: str
+    user_id: str
     status: SessionStatus
     created_at: datetime
-    updated_at: datetime
     expires_at: datetime
     websocket_url: str
     streaming_config: StreamingConfig
     audio_settings: AudioSettings
+
+
+class StreamingSessionCreateResponse(StreamingSessionBaseResponse):
+    """Response when starting a streaming session"""
+    pass
+
+
+class ResponseStreamingSessionCreate(StreamingSessionBaseResponse):
+    """Response for POST /streaming/sessions"""
+    pass
+
+
+
+
+class StreamingSessionStatusRead(StreamingSessionBaseResponse):
+    """Detailed status of an ongoing streaming session"""
+    updated_at: datetime
     metrics: Optional[Dict[str, Any]] = None
     errors: Optional[List[Dict[str, Any]]] = None
 

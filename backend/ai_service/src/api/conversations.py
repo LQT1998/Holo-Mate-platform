@@ -17,12 +17,12 @@ from ai_service.src.schemas.conversation import (
     ConversationUpdate,
     ConversationSettings,
 )
-from backend.shared.src.schemas.message_schema import (
+from shared.src.schemas.message_schema import (
     MessageResponse,
     MessageListResponse,
 )
 
-from backend.shared.src.constants import DEV_OWNER_ID
+from shared.src.constants import DEV_OWNER_ID
 
 router = APIRouter(tags=["Conversations"])
 

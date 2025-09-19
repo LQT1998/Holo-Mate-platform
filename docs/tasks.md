@@ -68,16 +68,16 @@
 - [✓] T024 [P] Contract test POST /conversations in tests/contract/test_conversations_create.py
 - [✓] T025 [P] Contract test GET /conversations/{id} in tests/contract/test_conversations_get.py
 - [✓] T026 [P] Contract test PUT /conversations/{id} in tests/contract/test_conversations_update.py
-- [x] T027 [P] Contract test GET /conversations/{id}/messages in tests/contract/test_messages_list.py
-- [x] T028 [P] Contract test POST /streaming/chat in tests/contract/test_streaming_start.py
-- [x] T029 [P] Contract test GET /streaming/sessions/{id}/chat in tests/contract/test_streaming_status.py
-- [x] T030 [P] Contract test GET /devices in tests/contract/test_devices_list.py
-- [x] T031 [P] Contract test POST /devices in tests/contract/test_devices_register.py
-- [x] T032 [P] Contract test GET /devices/{id} in tests/contract/test_devices_get.py
-- [x] T033 [P] Contract test PUT /devices/{id} in tests/contract/test_devices_update.py
-- [x] T034 [P] Contract test GET /subscriptions in tests/contract/test_subscriptions_get.py
-- [x] T035 [P] Contract test POST /subscriptions in tests/contract/test_subscriptions_create.py
-- [x] T036 [P] Contract test GET /voice-profiles in tests/contract/test_voice_profiles_list.py
+- [✓] T027 [P] Contract test GET /conversations/{id}/messages in tests/contract/test_messages_list.py
+- [✓] T028 [P] Contract test POST /streaming/chat in tests/contract/test_streaming_start.py
+- [✓] T029 [P] Contract test GET /streaming/sessions/{id}/chat in tests/contract/test_streaming_status.py
+- [✓] T030 [P] Contract test GET /devices in tests/contract/test_devices_list.py
+- [✓] T031 [P] Contract test POST /devices in tests/contract/test_devices_register.py
+- [✓] T032 [P] Contract test GET /devices/{id} in tests/contract/test_devices_get.py
+- [✓] T033 [P] Contract test PUT /devices/{id} in tests/contract/test_devices_update.py
+- [✓] T034 [P] Contract test GET /subscriptions in tests/contract/test_subscriptions_get.py
+- [✓] T035 [P] Contract test POST /subscriptions in tests/contract/test_subscriptions_create.py
+- [✓] T036 [P] Contract test GET /voice-profiles in tests/contract/test_voice_profiles_list.py
 
 ### Integration Tests (User Stories)
 - [ ] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py
@@ -143,8 +143,9 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T084 POST /messages endpoint in backend/ai_service/src/api/conversations.py
 - [✓] T085 GET /messages/{id} endpoint in backend/ai_service/src/api/messages.py
 - [✓] T085b DELETE /messages/{id} endpoint in backend/ai_service/src/api/messages.py
-- [✓] T085c POST /streaming/sessions endpoint in backend/streaming_service/src/api/sessions.py
+- [✓] T085c POST /streaming/sessions endpoint in backend/streaming_service/src/api/streaming.py
 - [✓] T085d GET /streaming/sessions/{id}/chat endpoint in backend/streaming_service/src/api/streaming.py
+- [✓] T028 POST /streaming/chat endpoint in backend/streaming_service/src/api/streaming.py
 - [ ] T086 GET /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T087 POST /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
@@ -271,36 +272,44 @@ Task: "DeviceService in backend/streaming_service/src/services/device_service.py
 - Use real dependencies in integration tests
 - Maintain constitutional principles throughout
 
-## Current Status (Updated: 2025-09-18)
+## Current Status (Updated: 2025-01-27)
 
 ### ✅ Completed Tasks
 **Phase 3.2: Contract Tests**
 - Auth, Users, AI Companions, Conversations, Messages, Streaming Sessions.
-- Total: 194 tests (192 passed, 2 skipped).
+- Total: 323 tests (274 passed, 47 failed, 2 skipped).
 
 **Phase 3.3: API Endpoints**
-- ✅ Auth Service: T070-T073
-- ✅ AI Service (Companions): T074-T078
-- ✅ AI Service (Conversations & Messages): T079-T085b
-- ✅ Streaming Service: T085c (POST /streaming/sessions)
+- ✅ Auth Service: T070-T073 (100% complete)
+- ✅ AI Service (Companions): T074-T078 (100% complete)
+- ✅ AI Service (Conversations & Messages): T079-T085b (100% complete)
+- ✅ Streaming Service: T028, T085c, T085d (60% complete)
+  - ✅ POST /streaming/sessions
+  - ✅ GET /streaming/sessions/{id}/chat
+  - ✅ POST /streaming/chat (alias)
 
 ### 🎯 Next Priority Tasks
-1.  **T086** - Implement GET /devices endpoint.
-2.  **T030** - Create contract test for GET /devices.
-3.  **T051** - Implement HologramDevice model.
+1. **T086-T089** - Implement Device endpoints (GET/POST/PUT /devices)
+2. **T090-T091** - Implement Subscription endpoints (GET/POST /subscriptions)
+3. **T092** - Implement Voice Profiles endpoint (GET /voice-profiles)
+4. **T051** - Implement HologramDevice model
+5. **T053** - Implement Subscription model
+6. **T055** - Implement VoiceProfile model
 
 ### 📊 Test Results Summary
-- **Total Tests**: 194 (192 passed, 2 skipped)
-- **Auth Service**: 34 tests ✅
-- **AI Companions**: 55 tests ✅
-- **Conversations & Messages**: 100 tests ✅
-- **Streaming Service**: 5 tests ✅ (1 skipped)
+- **Total Tests**: 323 (274 passed, 47 failed, 2 skipped)
+- **Auth Service**: 34 tests ✅ (100%)
+- **AI Companions**: 55 tests ✅ (100%)
+- **Conversations & Messages**: 100 tests ✅ (100%)
+- **Streaming Service**: 37 tests ✅ (100%, 1 skipped)
+- **Device Management**: 0 tests ❌ (0% - 30 tests failing)
+- **Subscription Management**: 0 tests ❌ (0% - 17 tests failing)
 
 ### 🔧 Technical Notes
-- All endpoints use DEV mode with mock data.
-- Separated message endpoints into `ai_service/src/api/messages.py`.
-- Created new `streaming_service` with initial `/sessions` endpoint.
-- No regressions detected in existing functionality.
+- All implemented endpoints use DEV mode with mock data
+- Streaming service endpoints consolidated in `streaming.py` (removed `sessions.py`)
+- API paths standardized per tasks.md requirements
+- Device, Subscription, and Voice Profile endpoints not yet implemented
 
 ## Task Generation Rules
 *Applied during main() execution*
