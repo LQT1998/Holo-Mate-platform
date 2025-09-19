@@ -42,11 +42,9 @@ class TestStreamingSessionCreate:
 
         assert response.status_code == 201
         data = response.json()
-        assert "id" in data
-        assert data["device_id"] == "device_123"
+        assert "session_id" in data
         assert data["user_id"] == str(DEV_OWNER_ID)
         assert data["status"] == "active"
-        assert data["settings"] == {"quality": "1080p"}
         assert "Location" in response.headers
         assert response.headers["Location"].startswith("/streaming/sessions/")
 

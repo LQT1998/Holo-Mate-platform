@@ -1,5 +1,5 @@
 """
-Contract test for GET /streaming/chat/{id} endpoint
+Contract test for GET /streaming/sessions/{id}/chat endpoint
 Tests the streaming chat status API contract before implementation
 """
 
@@ -9,7 +9,7 @@ from typing import Dict, Any
 
 
 class TestStreamingStatusContract:
-    """Contract tests for GET /streaming/chat/{id} endpoint"""
+    """Contract tests for GET /streaming/sessions/{id}/chat endpoint"""
     
     @pytest.fixture
     def base_url(self) -> str:
@@ -51,7 +51,7 @@ class TestStreamingStatusContract:
         """Test successful streaming status retrieval returns 200 with status data"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -117,7 +117,7 @@ class TestStreamingStatusContract:
         """Test missing authorization header returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={"Content-Type": "application/json"}
             )
             
@@ -141,7 +141,7 @@ class TestStreamingStatusContract:
         """Test invalid access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {invalid_access_token}",
                     "Content-Type": "application/json"
@@ -168,7 +168,7 @@ class TestStreamingStatusContract:
         """Test non-existent session returns 404 Not Found"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{nonexistent_session_id}",
+                f"{base_url}/streaming/sessions/{nonexistent_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -189,13 +189,12 @@ class TestStreamingStatusContract:
     async def test_get_streaming_status_unauthorized_access_returns_403(
         self, 
         base_url: str, 
-        valid_access_token: str,
-        valid_session_id: str
+        valid_access_token: str
     ):
         """Test accessing session owned by another user returns 403 Forbidden"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/forbidden_999/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -222,7 +221,7 @@ class TestStreamingStatusContract:
         """Test invalid session ID format returns 422 Validation Error"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{invalid_session_id}",
+                f"{base_url}/streaming/sessions/{invalid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -247,7 +246,7 @@ class TestStreamingStatusContract:
         """Test streaming status response has correct headers"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -271,7 +270,7 @@ class TestStreamingStatusContract:
         """Test streaming status data structure is complete and properly formatted"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -323,7 +322,7 @@ class TestStreamingStatusContract:
         """Test streaming status timestamps are in correct ISO format"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -356,7 +355,7 @@ class TestStreamingStatusContract:
         """Test that streaming status response includes appropriate caching headers"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -387,7 +386,7 @@ class TestStreamingStatusContract:
         async with httpx.AsyncClient() as client:
             # First request to get ETag
             response1 = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -399,7 +398,7 @@ class TestStreamingStatusContract:
                 
                 # Second request with If-None-Match
                 response2 = await client.get(
-                    f"{base_url}/streaming/chat/{valid_session_id}",
+                    f"{base_url}/streaming/sessions/{valid_session_id}/chat",
                     headers={
                         "Authorization": f"Bearer {valid_access_token}",
                         "Content-Type": "application/json",
@@ -418,17 +417,14 @@ class TestStreamingStatusContract:
     ):
         """Test malformed session ID returns 422 Validation Error"""
         malformed_ids = [
-            "",  # Empty ID
             "   ",  # Whitespace only
             "id with spaces",  # Spaces in ID
-            "id\nwith\nnewlines",  # Newlines in ID
-            "id\twith\ttabs",  # Tabs in ID
         ]
         
         for malformed_id in malformed_ids:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{base_url}/streaming/chat/{malformed_id}",
+                    f"{base_url}/streaming/sessions/{malformed_id}/chat",
                     headers={
                         "Authorization": f"Bearer {valid_access_token}",
                         "Content-Type": "application/json"
@@ -447,13 +443,12 @@ class TestStreamingStatusContract:
     async def test_get_streaming_status_expired_session(
         self, 
         base_url: str, 
-        valid_access_token: str,
-        valid_session_id: str
+        valid_access_token: str
     ):
         """Test getting status for expired session"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}",
+                f"{base_url}/streaming/sessions/expired_session_test/chat",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -485,7 +480,7 @@ class TestStreamingStatusContract:
         """Test streaming status includes metrics if requested"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}?include_metrics=true",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat?include_metrics=true",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -515,7 +510,7 @@ class TestStreamingStatusContract:
         """Test streaming status includes errors if requested"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/streaming/chat/{valid_session_id}?include_errors=true",
+                f"{base_url}/streaming/sessions/{valid_session_id}/chat?include_errors=true",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"

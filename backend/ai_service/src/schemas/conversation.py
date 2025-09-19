@@ -59,7 +59,7 @@ class ConversationUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     settings: Optional[ConversationSettings] = None
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
 class ConversationListResponse(BaseModel):

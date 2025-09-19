@@ -70,7 +70,7 @@
 - [✓] T026 [P] Contract test PUT /conversations/{id} in tests/contract/test_conversations_update.py
 - [x] T027 [P] Contract test GET /conversations/{id}/messages in tests/contract/test_messages_list.py
 - [x] T028 [P] Contract test POST /streaming/chat in tests/contract/test_streaming_start.py
-- [x] T029 [P] Contract test GET /streaming/chat/{id} in tests/contract/test_streaming_status.py
+- [x] T029 [P] Contract test GET /streaming/sessions/{id}/chat in tests/contract/test_streaming_status.py
 - [x] T030 [P] Contract test GET /devices in tests/contract/test_devices_list.py
 - [x] T031 [P] Contract test POST /devices in tests/contract/test_devices_register.py
 - [x] T032 [P] Contract test GET /devices/{id} in tests/contract/test_devices_get.py
@@ -144,6 +144,7 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T085 GET /messages/{id} endpoint in backend/ai_service/src/api/messages.py
 - [✓] T085b DELETE /messages/{id} endpoint in backend/ai_service/src/api/messages.py
 - [✓] T085c POST /streaming/sessions endpoint in backend/streaming_service/src/api/sessions.py
+- [✓] T085d GET /streaming/sessions/{id}/chat endpoint in backend/streaming_service/src/api/streaming.py
 - [ ] T086 GET /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T087 POST /devices endpoint in backend/streaming_service/src/api/devices.py
 - [ ] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py

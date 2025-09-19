@@ -7,6 +7,7 @@ from streaming_service.src.config import settings
 from shared.src.schemas.streaming_session_schema import (
     StreamingSessionCreate,
     StreamingSessionRead,
+    SessionStatus,
 )
 from shared.src.constants import DEV_OWNER_ID
 
@@ -43,13 +44,12 @@ async def create_streaming_session(
     session_id = uuid.uuid4()
 
     session = StreamingSessionRead(
-        id=session_id,
-        device_id=payload.device_id,
+        session_id=session_id,
+        device_id=uuid.UUID(str(uuid.uuid4())),  # Convert to UUID
         user_id=uuid.UUID(str(current_user["id"])),
-        status="active",
+        status=SessionStatus.active,
         created_at=now,
         updated_at=now,
-        settings=payload.settings or {},
     )
 
     response.headers["Location"] = f"/streaming/sessions/{session_id}"

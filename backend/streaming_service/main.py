@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from streaming_service.src.api import sessions
+from streaming_service.src.api import sessions, streaming
 
 app = FastAPI(
     title="Holo-Mate Streaming Service",
@@ -34,6 +34,7 @@ async def health_check():
 
 # Routers
 app.include_router(sessions.router)
+app.include_router(streaming.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8003)

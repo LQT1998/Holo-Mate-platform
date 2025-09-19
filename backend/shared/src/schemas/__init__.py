@@ -72,6 +72,11 @@ from .streaming_session_schema import (
     StreamingSessionRead,
     StreamingSessionListResponse,
 )
+from .streaming_chat_schema import (
+    StreamingSessionStatusRead,
+    StreamingSessionCreate,
+    StreamingSessionResponse,
+)
 
 __all__ = [
     # User schemas
@@ -103,6 +108,10 @@ __all__ = [
     "StreamingSessionCreate",
     "StreamingSessionRead",
     "StreamingSessionListResponse",
+    # Streaming Chat Schemas
+    "StreamingSessionStatusRead",
+    "StreamingSessionCreate",
+    "StreamingSessionResponse",
     # Device schemas
     "DeviceCreate",
     "DeviceUpdate",
