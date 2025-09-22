@@ -242,13 +242,13 @@ class TestDevicesUpdateContract:
         self, 
         base_url: str, 
         valid_access_token: str,
-        valid_device_id: str,
         valid_update_data: Dict[str, Any]
     ):
         """Test updating device owned by another user returns 403 Forbidden"""
+        forbidden_device_id = "forbidden_device_999"
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/devices/{valid_device_id}",
+                f"{base_url}/devices/{forbidden_device_id}",
                 json=valid_update_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",

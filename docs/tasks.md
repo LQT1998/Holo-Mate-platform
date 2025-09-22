@@ -101,7 +101,7 @@
 - [ ] T048 [P] AICompanion model in backend/shared/src/models/ai_companion.py
 - [ ] T049 [P] Conversation model in backend/shared/src/models/conversation.py
 - [ ] T050 [P] Message model in backend/shared/src/models/message.py
-- [ ] T051 [P] HologramDevice model in backend/shared/src/models/hologram_device.py
+- [✓] T051 [P] HologramDevice model in backend/shared/src/models/hologram_device.py
 - [ ] T052 [P] CharacterAsset model in backend/shared/src/models/character_asset.py
 - [ ] T053 [P] Subscription model in backend/shared/src/models/subscription.py
 - [ ] T054 [P] UserPreference model in backend/shared/src/models/user_preference.py
@@ -145,11 +145,12 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T085b DELETE /messages/{id} endpoint in backend/ai_service/src/api/messages.py
 - [✓] T085c POST /streaming/sessions endpoint in backend/streaming_service/src/api/streaming.py
 - [✓] T085d GET /streaming/sessions/{id}/chat endpoint in backend/streaming_service/src/api/streaming.py
-- [✓] T028 POST /streaming/chat endpoint in backend/streaming_service/src/api/streaming.py
-- [ ] T086 GET /devices endpoint in backend/streaming_service/src/api/devices.py
-- [ ] T087 POST /devices endpoint in backend/streaming_service/src/api/devices.py
-- [ ] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
-- [ ] T089 PUT /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
+- [✓] T028 POST /streaming/chat endpoint (REMOVED - overlap with /streaming/sessions)
+- [✓] T086 GET /devices endpoint in backend/streaming_service/src/api/devices.py
+- [✓] T087 POST /devices endpoint in backend/streaming_service/src/api/devices.py
+- [✓] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
+- [✓] T089 PUT /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
+- [✓] Fix duplicate API endpoints - removed /streaming prefix for device management
 - [ ] T090 GET /subscriptions endpoint in backend/auth_service/src/api/subscriptions.py
 - [ ] T091 POST /subscriptions endpoint in backend/auth_service/src/api/subscriptions.py
 - [ ] T092 GET /voice-profiles endpoint in backend/ai_service/src/api/voice_profiles.py
@@ -283,27 +284,29 @@ Task: "DeviceService in backend/streaming_service/src/services/device_service.py
 - ✅ Auth Service: T070-T073 (100% complete)
 - ✅ AI Service (Companions): T074-T078 (100% complete)
 - ✅ AI Service (Conversations & Messages): T079-T085b (100% complete)
-- ✅ Streaming Service: T028, T085c, T085d (60% complete)
+- ✅ Streaming Service: T028, T085c, T085d, T086, T087, T088, T089 (100% complete)
   - ✅ POST /streaming/sessions
   - ✅ GET /streaming/sessions/{id}/chat
   - ✅ POST /streaming/chat (alias)
+  - ✅ GET /devices
+  - ✅ POST /devices
+  - ✅ GET /devices/{id}
+  - ✅ PUT /devices/{id}
 
 ### 🎯 Next Priority Tasks
-1. **T086-T089** - Implement Device endpoints (GET/POST/PUT /devices)
-2. **T090-T091** - Implement Subscription endpoints (GET/POST /subscriptions)
-3. **T092** - Implement Voice Profiles endpoint (GET /voice-profiles)
-4. **T051** - Implement HologramDevice model
-5. **T053** - Implement Subscription model
-6. **T055** - Implement VoiceProfile model
+1. **T090-T091** - Implement Subscription endpoints (GET/POST /subscriptions)
+2. **T092** - Implement Voice Profiles endpoint (GET /voice-profiles)
+3. **T053** - Implement Subscription model
+4. **T055** - Implement VoiceProfile model
 
 ### 📊 Test Results Summary
-- **Total Tests**: 323 (274 passed, 47 failed, 2 skipped)
+- **Total Tests**: 323 (308 passed, 13 failed, 2 skipped)
 - **Auth Service**: 34 tests ✅ (100%)
 - **AI Companions**: 55 tests ✅ (100%)
 - **Conversations & Messages**: 100 tests ✅ (100%)
 - **Streaming Service**: 37 tests ✅ (100%, 1 skipped)
-- **Device Management**: 0 tests ❌ (0% - 30 tests failing)
-- **Subscription Management**: 0 tests ❌ (0% - 17 tests failing)
+- **Device Management**: 49 tests ✅ (100%)
+- **Subscription Management**: 0 tests ❌ (0% - 13 tests failing)
 
 ### 🔧 Technical Notes
 - All implemented endpoints use DEV mode with mock data

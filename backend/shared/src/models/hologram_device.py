@@ -1,8 +1,9 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, func, ForeignKey, JSON
+from sqlalchemy import Column, String, DateTime, func, ForeignKey, JSON, Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from .base import Base, GUID
+from shared.src.schemas.device_schema import DeviceType, DeviceStatus
 
 
 class HologramDevice(Base):
@@ -11,8 +12,8 @@ class HologramDevice(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
-    device_type = Column(String, nullable=False) # "hologram_fan", "mobile_app", etc.
-    status = Column(String, nullable=False, default="offline") # "online", "offline", "unpaired"
+    device_type = Column(SAEnum(DeviceType, name="device_type_enum"), nullable=False)
+    status = Column(SAEnum(DeviceStatus, name="device_status_enum"), nullable=False, default=DeviceStatus.offline)
     
     last_seen_at = Column(DateTime, default=func.now(), nullable=False)
     created_at = Column(DateTime, default=func.now(), nullable=False)

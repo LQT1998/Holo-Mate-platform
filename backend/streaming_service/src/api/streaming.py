@@ -14,7 +14,6 @@ from streaming_service.src.config import settings
 from shared.src.schemas.streaming_session_schema import (
     StreamingSessionStatusRead,
     StreamingSessionCreate,
-    StreamingChatCreate,
     ResponseStreamingSessionCreate,
     SessionStatus,
     StreamingConfig,
@@ -177,83 +176,3 @@ async def start_streaming_chat(
     )
 
 
-@router.post(
-    "/chat",
-    response_model=ResponseStreamingSessionCreate,
-    status_code=201,
-    summary="Start streaming chat session",
-    description="Start a new streaming chat session with an AI companion"
-)
-async def start_streaming_chat(
-    request: StreamingChatCreate,
-    response: Response,
-    current_user: dict = Depends(get_current_user)
-) -> ResponseStreamingSessionCreate:
-    """
-    Start a new streaming chat session.
-    
-    This endpoint creates a new streaming session for real-time voice communication
-    with an AI companion. The session includes WebSocket URL for bidirectional
-    audio streaming.
-    """
-    if not settings.DEV_MODE:
-        raise HTTPException(status_code=501, detail="Not implemented")
-
-    # Validation logic for DEV mode
-    # At least one of device_id, conversation_id, or companion_id must be provided
-    if not any([request.device_id, request.conversation_id, request.companion_id]):
-        raise HTTPException(status_code=422, detail=[{"type": "missing", "loc": ["body"], "msg": "At least one of device_id, conversation_id, or companion_id must be provided", "input": {}}])
-    
-    if request.device_id is not None:
-        if not isinstance(request.device_id, str):
-            raise HTTPException(status_code=422, detail="Invalid device ID format")
-        if request.device_id == "invalid_device_id":
-            raise HTTPException(status_code=422, detail="Invalid device ID format")
-        if request.device_id == "nonexistent_device_456":
-            raise HTTPException(status_code=404, detail="Device not found")
-        if request.device_id == "forbidden_999":
-            raise HTTPException(status_code=403, detail="Forbidden: You do not own this device")
-        if request.device_id == "unavailable_device_999":
-            raise HTTPException(status_code=503, detail="Device not available")
-    
-    # Additional validation for conversation/companion if provided
-    if request.conversation_id is not None:
-        if not request.conversation_id.strip():
-            raise HTTPException(status_code=422, detail="conversation_id cannot be empty")
-        if request.conversation_id == "nonexistent_conversation_456":
-            raise HTTPException(status_code=404, detail="Conversation not found")
-        if request.conversation_id == "other_user_conversation_789":
-            raise HTTPException(status_code=403, detail="Access denied to conversation")
-    
-    if request.companion_id is not None:
-        if not request.companion_id.strip():
-            raise HTTPException(status_code=422, detail="companion_id cannot be empty")
-        if request.companion_id == "nonexistent_companion_456":
-            raise HTTPException(status_code=404, detail="Companion not found")
-
-    # Generate session ID
-    session_id = str(uuid.uuid4())
-
-    # Create WebSocket URL
-    websocket_url = f"ws://localhost:8003/ws/streaming/chat/{session_id}"
-
-    # Set timestamps
-    now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(hours=1)
-
-    # Set Location header
-    response.headers["Location"] = f"/streaming/chat/{session_id}"
-
-    return ResponseStreamingSessionCreate(
-        session_id=session_id,
-        conversation_id=request.conversation_id or str(uuid.uuid4()),
-        companion_id=request.companion_id or str(uuid.uuid4()),
-        device_id=request.device_id or "default_device",
-        user_id=current_user.get("id"),
-        websocket_url=websocket_url,
-        status=SessionStatus.active,
-        created_at=now,
-        expires_at=expires_at,
-        streaming_config=request.streaming_config or StreamingConfig(),
-        audio_settings=request.audio_settings or AudioSettings(),
-    )
