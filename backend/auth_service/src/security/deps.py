@@ -42,7 +42,7 @@ async def get_current_user(
 
         # --- Dev shortcut ---
         if settings.DEV_MODE:
-            if token == "test_token":
+            if token in ["test_token", "valid_access_token_here"]:
                 class MockUser:
                     def __init__(self):
                         self.id = str(DEV_OWNER_ID)

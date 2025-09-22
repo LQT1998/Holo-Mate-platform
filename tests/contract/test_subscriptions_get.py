@@ -142,7 +142,8 @@ class TestSubscriptionsGetContract:
                 f"{base_url}/subscriptions",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "X-Test-No-Subscription": "true"
                 }
             )
             

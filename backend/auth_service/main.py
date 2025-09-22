@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # Assuming your API routers are in app.api
-from auth_service.src.api import auth, users
+from auth_service.src.api import auth, users, subscriptions
 from auth_service.src.config import settings
 from auth_service.src.db.session import get_db
 from shared.src.models.base import Base
@@ -35,6 +35,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(auth.router, prefix="/auth")
 app.include_router(users.router)
+app.include_router(subscriptions.router)
 
 @app.get("/")
 async def root():

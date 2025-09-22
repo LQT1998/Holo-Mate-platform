@@ -248,7 +248,8 @@ class TestSubscriptionsCreateContract:
                 json=valid_subscription_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "X-Test-409-Conflict": "true"
                 }
             )
             

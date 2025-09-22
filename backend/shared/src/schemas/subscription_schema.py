@@ -3,17 +3,24 @@ Pydantic schemas for Subscription entity
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 from decimal import Decimal
 import uuid
 
 
+class PaymentInfo(BaseModel):
+    """Nested schema for payment information"""
+    method_id: str
+    coupon_code: Optional[str]
+    status: str
+
+
 class SubscriptionCreate(BaseModel):
     """Schema for creating a new subscription"""
-    plan_name: str = Field(..., min_length=1, max_length=50)
-    price: Decimal = Field(..., ge=0)
-    currency: str = Field(default="USD", max_length=3)
+    plan_id: str = Field(..., min_length=1, max_length=50, description="Subscription plan identifier")
+    payment_method_id: str = Field(..., min_length=1, max_length=100, description="Payment method identifier")
+    coupon_code: Optional[str] = Field(None, max_length=128, description="Optional coupon code for discount")
 
 
 class SubscriptionUpdate(BaseModel):
@@ -25,13 +32,15 @@ class SubscriptionResponse(BaseModel):
     """Schema for subscription response"""
     id: uuid.UUID
     user_id: uuid.UUID
-    plan_name: str
+    plan: dict  # Will accept dict automatically
     status: str
     start_date: datetime
     end_date: Optional[datetime]
     next_billing_date: Optional[datetime]
-    price: Decimal
-    currency: str
+    usage: dict  # Will accept dict automatically
+    payment_info: PaymentInfo
+    payment_method_id: str
+    coupon_code: Optional[str]
     created_at: datetime
     updated_at: datetime
 

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 
 from ai_service.src.config import settings
 from shared.src.security.security import verify_access_token  # dùng chung từ shared
+from shared.src.constants import DEV_OWNER_ID
 
 # auto_error=False để tránh 403 mặc định
 security = HTTPBearer(auto_error=False)
@@ -38,7 +39,7 @@ async def get_current_user(
             if token == "valid_access_token_here":
                 now = datetime.now(timezone.utc)
                 return {
-                    "id": "00000000-0000-0000-0000-000000000000",
+                    "id": str(DEV_OWNER_ID),
                     "email": "test@example.com",
                     "is_active": True,
                     "created_at": now,
