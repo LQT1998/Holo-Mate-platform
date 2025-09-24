@@ -10,7 +10,7 @@ import uvicorn
 
 # Local imports (absolute from ai_service package)
 from ai_service.src.exceptions import AppError, app_error_handler
-from ai_service.src.api import ai_companions, conversations, messages
+from ai_service.src.api import ai_companions, conversations, messages, voice_profiles
 
 app = FastAPI(
     title="Holo-Mate AI Service",
@@ -42,6 +42,7 @@ async def health_check():
 app.include_router(ai_companions.router)
 app.include_router(conversations.router)
 app.include_router(messages.router)
+app.include_router(voice_profiles.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

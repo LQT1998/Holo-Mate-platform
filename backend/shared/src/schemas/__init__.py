@@ -52,9 +52,11 @@ from .subscription_schema import (
 
 # Voice Profile schemas
 from .voice_profile_schema import (
+    VoiceProfileBase,
+    VoiceProfileResponse,
+    VoiceProfileListResponse,
     VoiceProfileCreate,
     VoiceProfileUpdate,
-    VoiceProfileResponse,
 )
 
 # Token / Auth schemas
@@ -121,9 +123,11 @@ __all__ = [
     "SubscriptionUpdate",
     "SubscriptionResponse",
     # Voice Profile schemas
+    "VoiceProfileBase",
+    "VoiceProfileResponse",
+    "VoiceProfileListResponse",
     "VoiceProfileCreate",
     "VoiceProfileUpdate",
-    "VoiceProfileResponse",
     # Token / Auth schemas
     "TokenSchema",
     "TokenData",
