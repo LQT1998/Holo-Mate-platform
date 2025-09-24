@@ -10,14 +10,26 @@ import uvicorn
 # Assuming your API routers are in app.api
 from auth_service.src.api import auth, users, subscriptions
 from auth_service.src.config import settings
-from shared.src.db.session import lifespan_manager
+from shared.src.db.session import close_engine, create_engine
+from shared.src.utils.redis import close_redis, get_redis
 
 app = FastAPI(
     title="Holo-Mate Auth Service",
     description="Authentication and user management for Holo-Mate platform",
     version="1.0.0",
-    lifespan=lifespan_manager
 )
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    create_engine()
+    await get_redis()
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    await close_redis()
+    await close_engine()
 
 # CORS middleware
 app.add_middleware(

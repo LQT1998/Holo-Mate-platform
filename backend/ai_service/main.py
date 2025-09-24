@@ -11,14 +11,26 @@ import uvicorn
 # Local imports (absolute from ai_service package)
 from ai_service.src.exceptions import AppError, app_error_handler
 from ai_service.src.api import ai_companions, conversations, messages, voice_profiles
-from shared.src.db.session import lifespan_manager
+from shared.src.db.session import create_engine, close_engine_async
+from shared.src.utils.redis import close_redis, get_redis
 
 app = FastAPI(
     title="Holo-Mate AI Service",
     description="AI companion management and conversation handling for Holo-Mate platform",
     version="1.0.0",
-    lifespan=lifespan_manager
 )
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    create_engine()
+    await get_redis()
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    await close_redis()
+    await close_engine_async()
 
 # CORS middleware
 app.add_middleware(

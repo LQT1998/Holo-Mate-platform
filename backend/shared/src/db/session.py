@@ -1,9 +1,9 @@
 """Async database session utilities shared across services."""
 
-import asyncio
+from __future__ import annotations
+
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator as TypingAsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -21,16 +21,14 @@ def create_engine():
     global engine, SessionLocal
     if engine is None:
         engine = create_async_engine(
-            DATABASE_URL, 
-            echo=settings.DB_ECHO, 
+            DATABASE_URL,
+            echo=settings.DB_ECHO,
             future=True,
-            pool_pre_ping=True,  # Verify connections before use
-            pool_recycle=3600,   # Recycle connections every hour
+            pool_pre_ping=True,
+            pool_recycle=3600,
         )
         SessionLocal = async_sessionmaker(
-            bind=engine, 
-            class_=AsyncSession, 
-            expire_on_commit=False
+            bind=engine, class_=AsyncSession, expire_on_commit=False
         )
     return engine, SessionLocal
 
@@ -45,33 +43,39 @@ async def close_engine():
 
 
 @asynccontextmanager
-async def lifespan_manager(app):
-    """Lifespan manager for FastAPI applications."""
-    # Startup
+async def lifespan_manager(app):  # pylint: disable=unused-argument
+    """Lifespan manager handling database resources."""
+
     create_engine()
-    yield
-    # Shutdown
-    await close_engine()
+    try:
+        yield
+    finally:
+        await close_engine()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Yield an async database session for FastAPI dependencies."""
     if SessionLocal is None:
         create_engine()
-    
+
     async with SessionLocal() as session:
         try:
             yield session
-        except Exception:
+        except Exception:  # pragma: no cover - error propagation
             await session.rollback()
             raise
         finally:
             await session.close()
 
 
-# Convenience function for manual engine management
 async def get_engine():
     """Get or create database engine."""
     if engine is None:
         create_engine()
     return engine
+
+
+async def close_engine_async():
+    """Compatibility wrapper for closing engine in async contexts."""
+
+    await close_engine()

@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from typing import Annotated
+
 from pydantic import Field, GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 from pydantic_settings import BaseSettings
@@ -53,10 +54,47 @@ class DatabaseUrl(str):
         return cls(value)
 
 
+class RedisUrl(str):
+    """Custom Redis URL type supporting common schemes."""
+
+    ALLOWED_SCHEMES = {"redis", "rediss"}
+
+    def __new__(cls, value: str) -> "RedisUrl":
+        if not isinstance(value, str):
+            raise ValueError("Redis URL must be a string")
+
+        if "://" not in value:
+            raise ValueError("Redis URL must contain '://'")
+
+        scheme = value.split("://")[0]
+        if scheme not in cls.ALLOWED_SCHEMES:
+            raise ValueError(
+                f"Unsupported Redis scheme: {scheme}. "
+                f"Allowed schemes: {', '.join(sorted(cls.ALLOWED_SCHEMES))}"
+            )
+
+        return super().__new__(cls, value)
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: type, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        return core_schema.no_info_after_validator_function(
+            cls._validate,
+            core_schema.str_schema(),
+            serialization=core_schema.to_string_ser_schema(),
+        )
+
+    @classmethod
+    def _validate(cls, value: str) -> "RedisUrl":
+        return cls(value)
+
+
 class SharedSettings(BaseSettings):
     ENV: str = "dev"
     DATABASE_URL: Annotated[DatabaseUrl, Field(..., env="DATABASE_URL")]
     DB_ECHO: bool = Field(default=False, env="DB_ECHO")
+    REDIS_URL: Annotated[RedisUrl, Field(..., env="REDIS_URL")]
 
     class Config:
         env_file = ".env"
