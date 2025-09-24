@@ -1,16 +1,20 @@
+"""Base declarative model and custom GUID type."""
+
 import uuid
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.types import TypeDecorator, CHAR
+from typing import Any
+
+from sqlalchemy import MetaData
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.types import CHAR, TypeDecorator
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    metadata = MetaData()
 
 
-class GUID(TypeDecorator):
-    """Platform-independent GUID/UUID type.
-
-    Uses PostgreSQL's UUID type, otherwise stores as CHAR(36) for SQLite.
-    """
+class GUID(TypeDecorator[Any]):
+    """Platform-independent GUID/UUID type."""
 
     impl = CHAR
     cache_ok = True
@@ -20,7 +24,7 @@ class GUID(TypeDecorator):
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value, dialect):  # type: ignore[override]
         if value is None:
             return value
         if dialect.name == "postgresql":
@@ -29,7 +33,7 @@ class GUID(TypeDecorator):
             return str(value)
         return str(uuid.UUID(str(value)))
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value, dialect):  # type: ignore[override]
         if value is None:
             return value
         if isinstance(value, uuid.UUID):

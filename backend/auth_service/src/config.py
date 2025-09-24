@@ -1,12 +1,15 @@
 from functools import lru_cache
-from pydantic import AnyUrl, computed_field
+from typing import Annotated
+from pydantic import AnyUrl, Field, computed_field
 from pydantic_settings import BaseSettings
+from shared.src.config import DatabaseUrl
 
 
 class Settings(BaseSettings):
     ENV: str = "dev"
 
-    DATABASE_URL: AnyUrl | None = None
+    DATABASE_URL: Annotated[DatabaseUrl, Field(..., env="DATABASE_URL")]
+    DB_ECHO: bool = Field(default=False, env="DB_ECHO")
     REDIS_URL: AnyUrl | None = None
 
     JWT_SECRET: str | None = None
@@ -27,7 +30,6 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
         extra = "ignore"  # Ignore extra fields from .env
-
 
 
 @lru_cache

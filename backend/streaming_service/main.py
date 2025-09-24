@@ -8,11 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from streaming_service.src.api import streaming, devices
+from shared.src.db.session import lifespan_manager
 
 app = FastAPI(
     title="Holo-Mate Streaming Service",
     description="Handles device streaming sessions for the Holo-Mate platform",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan_manager
 )
 
 # CORS middleware

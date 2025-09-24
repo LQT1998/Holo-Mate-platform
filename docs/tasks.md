@@ -174,7 +174,7 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [ ] T106 [P] AI emotion mapping system in unity_client/Assets/Scripts/Emotion/
 
 ## Phase 3.4: Integration
-- [ ] T107 Database connection and migration setup
+- [x] T107 Database connection and migration setup
 - [ ] T108 Redis connection and caching setup
 - [ ] T109 JWT authentication middleware
 - [ ] T110 CORS and security headers

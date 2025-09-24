@@ -11,11 +11,13 @@ import uvicorn
 # Local imports (absolute from ai_service package)
 from ai_service.src.exceptions import AppError, app_error_handler
 from ai_service.src.api import ai_companions, conversations, messages, voice_profiles
+from shared.src.db.session import lifespan_manager
 
 app = FastAPI(
     title="Holo-Mate AI Service",
     description="AI companion management and conversation handling for Holo-Mate platform",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan_manager
 )
 
 # CORS middleware
