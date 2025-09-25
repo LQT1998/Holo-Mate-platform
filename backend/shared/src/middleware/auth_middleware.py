@@ -18,12 +18,19 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         # Default exclude paths
         default_exclude = ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh"]
-        self.exclude_paths = set(exclude_paths or [] + default_exclude)
+        # Merge custom excludes with defaults (ensure parentheses for correct precedence)
+        self.exclude_paths = set((exclude_paths or []) + default_exclude)
+        # Also support prefix-based excludes like '/conversations' or '/messages'
+        self.exclude_prefixes = tuple(p for p in self.exclude_paths if p.endswith("*"))
 
     async def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:
-        # Skip authentication for excluded paths
+        # Skip authentication for excluded exact paths
         if request.url.path in self.exclude_paths:
             return await call_next(request)
+        # Skip for prefixes (support pattern '/path*')
+        for prefix in self.exclude_paths:
+            if prefix.endswith("*") and request.url.path.startswith(prefix[:-1]):
+                return await call_next(request)
             
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):

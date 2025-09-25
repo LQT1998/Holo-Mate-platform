@@ -10,7 +10,7 @@ class Message(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     conversation_id = Column(GUID(), ForeignKey("conversations.id"), nullable=False, index=True)
-    role = Column(String, nullable=False)  # "user" or "assistant"
+    role = Column(String, nullable=False)  # "user" or "companion"
     content = Column(Text, nullable=False)
     content_type = Column(String, default="text", nullable=False) # "text", "audio_url"
     

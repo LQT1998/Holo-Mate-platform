@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from streaming_service.src.api import streaming, devices
+from backend.streaming_service.src.api import streaming, devices
 from shared.src.db.session import create_engine, close_engine_async
 from shared.src.utils.redis import close_redis, get_redis
 from shared.src.middleware.auth_middleware import JWTAuthMiddleware

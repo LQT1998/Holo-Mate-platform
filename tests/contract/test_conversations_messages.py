@@ -44,7 +44,7 @@ class TestConversationsMessagesContract:
                 assert "role" in message
                 assert "content" in message
                 assert "created_at" in message
-                assert message["role"] in ["user", "assistant", "system"]
+                assert message["role"] in ["user", "companion", "system"]
 
     @pytest.mark.asyncio
     async def test_get_conversation_messages_missing_auth_returns_401(
@@ -202,7 +202,7 @@ class TestConversationsMessagesContract:
                 assert "updated_at" in message
                 
                 # Validate role values
-                assert message["role"] in ["user", "assistant", "system"]
+                assert message["role"] in ["user", "companion", "system"]
                 
                 # Validate content is not empty
                 assert len(message["content"]) > 0
