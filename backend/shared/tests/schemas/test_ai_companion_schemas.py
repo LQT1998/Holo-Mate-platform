@@ -7,11 +7,11 @@ def test_ai_companion_create_valid():
     data = {
         "name": "Luna",
         "description": "A creative companion",
-        "personality": {"trait": "creative"}
+        "personality": {"traits": ["creative", "friendly"]}
     }
     companion = AICompanionCreate(**data)
     assert companion.name == "Luna"
-    assert companion.personality["trait"] == "creative"
+    assert companion.personality.traits == ["creative", "friendly"]
 
 def test_ai_companion_create_name_required():
     """Test that 'name' is required in AICompanionCreate."""

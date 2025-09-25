@@ -3,7 +3,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 @pytest.mark.asyncio
-async def test_subscription_management_flow(client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
+async def test_subscription_management_flow(auth_client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
     """
     Integration test for the subscription management flow.
     1. User's initial subscription is the "free" plan.
@@ -13,7 +13,7 @@ async def test_subscription_management_flow(client: AsyncClient, db_session: Ses
     5. User can view their current subscription status.
     """
     # Step 1: Check initial subscription
-    initial_sub_response = await client.get("/subscriptions", headers=authenticated_user_headers)
+    initial_sub_response = await auth_client.get("/subscriptions", headers=authenticated_user_headers)
     
     assert initial_sub_response.status_code == 200
     initial_sub_data = initial_sub_response.json()
@@ -25,7 +25,7 @@ async def test_subscription_management_flow(client: AsyncClient, db_session: Ses
         "payment_token": "tok_visa" # From a payment provider like Stripe
     }
     
-    upgrade_response = await client.post("/subscriptions", json=upgrade_payload, headers=authenticated_user_headers)
+    upgrade_response = await auth_client.post("/subscriptions", json=upgrade_payload, headers=authenticated_user_headers)
     
     assert upgrade_response.status_code == 200
     upgraded_sub_data = upgrade_response.json()
@@ -38,6 +38,6 @@ async def test_subscription_management_flow(client: AsyncClient, db_session: Ses
     # assert sub_in_db.plan_name == "premium_monthly"
     
     # Step 5: View current subscription status again
-    current_sub_response = await client.get("/subscriptions", headers=authenticated_user_headers)
+    current_sub_response = await auth_client.get("/subscriptions", headers=authenticated_user_headers)
     assert current_sub_response.status_code == 200
     assert current_sub_response.json()["plan_name"] == "premium_monthly"

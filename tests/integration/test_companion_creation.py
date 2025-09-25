@@ -3,7 +3,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 @pytest.mark.asyncio
-async def test_ai_companion_creation_flow(client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
+async def test_ai_companion_creation_flow(ai_client, db_session: Session, authenticated_user_headers: dict):
     """
     Integration test for the AI companion creation flow.
     1. Authenticated user creates a new companion via API.
@@ -18,7 +18,7 @@ async def test_ai_companion_creation_flow(client: AsyncClient, db_session: Sessi
         "personality": {"trait": "creative"}
     }
     
-    create_response = await client.post("/ai-companions", json=companion_payload, headers=authenticated_user_headers)
+    create_response = await ai_client.post("/ai-companions", json=companion_payload, headers=authenticated_user_headers)
     
     assert create_response.status_code == 201
     companion_data = create_response.json()
@@ -34,7 +34,7 @@ async def test_ai_companion_creation_flow(client: AsyncClient, db_session: Sessi
     # assert companion_in_db.voice_profile is not None
 
     # Step 4: Verify the new companion is in the user's list
-    list_response = await client.get("/ai-companions", headers=authenticated_user_headers)
+    list_response = await ai_client.get("/ai-companions", headers=authenticated_user_headers)
     assert list_response.status_code == 200
     companions_list = list_response.json()["companions"]
     assert any(c["id"] == companion_id for c in companions_list)

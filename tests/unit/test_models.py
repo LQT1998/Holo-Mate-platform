@@ -196,6 +196,7 @@ def test_full_relationship_cascade(session):
 
     # 2. Delete the user
     session.delete(user)
+    session.flush()  # Ensure cascade operations are processed
     session.commit()
 
     # 3. Verify that all related data is gone

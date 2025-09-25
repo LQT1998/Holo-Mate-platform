@@ -93,8 +93,22 @@ async def login(
     """
     # Dev shortcut to satisfy contract tests without DB dependency
     if settings.ENV == "dev":
-        # Accept any email/password in DEV_MODE for testing
+        # Validate credentials in DEV_MODE for proper testing
         if not request.email or not request.password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Only accept specific test credentials in DEV_MODE
+        valid_credentials = {
+            "test@example.com": "validpassword123",
+            "user@example.com": "password123",
+            "admin@example.com": "admin123"
+        }
+        
+        if valid_credentials.get(request.email) != request.password:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",

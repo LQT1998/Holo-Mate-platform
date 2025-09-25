@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import uuid
 
 @pytest.mark.asyncio
-async def test_voice_conversation_flow(client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
+async def test_voice_conversation_flow(ai_client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
     """
     Integration test for the voice conversation flow.
     1. User starts a new conversation with an AI companion.
@@ -21,7 +21,7 @@ async def test_voice_conversation_flow(client: AsyncClient, db_session: Session,
 
     # Step 1 & 2: Start a new conversation
     start_conv_payload = {"ai_companion_id": companion_id}
-    start_conv_response = await client.post("/conversations", json=start_conv_payload, headers=authenticated_user_headers)
+    start_conv_response = await ai_client.post("/conversations", json=start_conv_payload, headers=authenticated_user_headers)
     
     assert start_conv_response.status_code == 201
     conversation_data = start_conv_response.json()
@@ -32,7 +32,7 @@ async def test_voice_conversation_flow(client: AsyncClient, db_session: Session,
         "content": "Hello, how are you?",
         "content_type": "text" # voice would be converted to text
     }
-    send_message_response = await client.post(f"/conversations/{conversation_id}/messages", json=user_message_payload, headers=authenticated_user_headers)
+    send_message_response = await ai_client.post(f"/conversations/{conversation_id}/messages", json=user_message_payload, headers=authenticated_user_headers)
     
     assert send_message_response.status_code == 201
 
@@ -42,7 +42,7 @@ async def test_voice_conversation_flow(client: AsyncClient, db_session: Session,
     # We'll assume the API confirms the AI message is stored.
 
     # Step 7: Verify conversation history
-    history_response = await client.get(f"/conversations/{conversation_id}/messages", headers=authenticated_user_headers)
+    history_response = await ai_client.get(f"/conversations/{conversation_id}/messages", headers=authenticated_user_headers)
     
     assert history_response.status_code == 200
     messages = history_response.json()["messages"]

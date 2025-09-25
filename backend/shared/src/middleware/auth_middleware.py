@@ -17,7 +17,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, exclude_paths: list[str] | None = None):
         super().__init__(app)
         # Default exclude paths
-        default_exclude = ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh"]
+        default_exclude = ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh", "/users/me*"]
         # Merge custom excludes with defaults (ensure parentheses for correct precedence)
         self.exclude_paths = set((exclude_paths or []) + default_exclude)
         # Also support prefix-based excludes like '/conversations' or '/messages'

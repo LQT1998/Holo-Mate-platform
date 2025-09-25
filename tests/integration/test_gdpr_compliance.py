@@ -3,7 +3,7 @@ from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 @pytest.mark.asyncio
-async def test_gdpr_data_export_flow(client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
+async def test_gdpr_data_export_flow(auth_client: AsyncClient, db_session: Session, authenticated_user_headers: dict):
     """
     Integration test for GDPR data export compliance.
     1. User requests to export all their personal data.
@@ -13,7 +13,7 @@ async def test_gdpr_data_export_flow(client: AsyncClient, db_session: Session, a
     """
     # Step 1: Request data export
     # Assuming a dedicated endpoint like /users/me/export
-    export_request_response = await client.post("/users/me/export", headers=authenticated_user_headers)
+    export_request_response = await auth_client.post("/users/me/export", headers=authenticated_user_headers)
     
     assert export_request_response.status_code == 202 # Accepted for processing
     
@@ -24,7 +24,7 @@ async def test_gdpr_data_export_flow(client: AsyncClient, db_session: Session, a
     # Step 2, 3, 4: Verify the export content
     # This part is highly dependent on implementation.
     # We might have another endpoint to check status and get the download link.
-    export_status_response = await client.get("/users/me/export/status", headers=authenticated_user_headers)
+    export_status_response = await auth_client.get("/users/me/export/status", headers=authenticated_user_headers)
     
     # Assuming it completes quickly for the test
     if export_status_response.status_code == 200:

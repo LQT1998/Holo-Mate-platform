@@ -48,17 +48,21 @@ async def client(auth_base_url: str) -> AsyncGenerator[httpx.AsyncClient, None]:
 
 
 @pytest.fixture
-async def ai_client(ai_base_url: str) -> AsyncGenerator[httpx.AsyncClient, None]:
+def ai_client(ai_base_url: str) -> httpx.AsyncClient:
     """HTTP client for making API requests to AI service."""
-    async with httpx.AsyncClient(base_url=ai_base_url, timeout=10.0) as client:
-        yield client
+    return httpx.AsyncClient(base_url=ai_base_url, timeout=10.0)
 
 
 @pytest.fixture
-async def streaming_client(streaming_base_url: str) -> AsyncGenerator[httpx.AsyncClient, None]:
+def streaming_client(streaming_base_url: str) -> httpx.AsyncClient:
     """HTTP client for making API requests to streaming service."""
-    async with httpx.AsyncClient(base_url=streaming_base_url, timeout=10.0) as client:
-        yield client
+    return httpx.AsyncClient(base_url=streaming_base_url, timeout=10.0)
+
+
+@pytest.fixture
+def auth_client(auth_base_url: str) -> httpx.AsyncClient:
+    """HTTP client for making API requests to auth service."""
+    return httpx.AsyncClient(base_url=auth_base_url, timeout=10.0)
 
 
 @pytest.fixture
@@ -99,3 +103,12 @@ def valid_conversation_id():
 def valid_access_token():
     """Fixture providing a valid access token for testing"""
     return "valid_access_token_here"
+
+
+@pytest.fixture
+def another_authenticated_user_headers():
+    """Fixture providing headers for another authenticated user for testing"""
+    return {
+        "Authorization": "Bearer another_valid_access_token_here",
+        "Content-Type": "application/json"
+    }

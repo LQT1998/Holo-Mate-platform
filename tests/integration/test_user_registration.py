@@ -65,7 +65,7 @@ from sqlalchemy.orm import Session
 # For now, it will serve as a placeholder for the user registration flow.
 
 @pytest.mark.asyncio
-async def test_user_registration_flow(client: AsyncClient, db_session: Session):
+async def test_user_registration_flow(auth_client: AsyncClient, db_session: Session):
     """
     Integration test for the complete user registration flow.
     1. User registers via API.
@@ -83,7 +83,7 @@ async def test_user_registration_flow(client: AsyncClient, db_session: Session):
     }
     
     # Assuming there's a /users/register endpoint in the auth service
-    register_response = await client.post("/auth/register", json=registration_payload)
+    register_response = await auth_client.post("/auth/register", json=registration_payload)
     
     assert register_response.status_code == 201
     user_data = register_response.json()
@@ -105,7 +105,7 @@ async def test_user_registration_flow(client: AsyncClient, db_session: Session):
         "email": registration_payload["email"],
         "password": registration_payload["password"]
     }
-    login_response = await client.post("/auth/login", json=login_payload)
+    login_response = await auth_client.post("/auth/login", json=login_payload)
     
     assert login_response.status_code == 200
     token_data = login_response.json()
