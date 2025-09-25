@@ -12,8 +12,9 @@ class Settings(BaseSettings):
     DB_ECHO: bool = Field(default=False, env="DB_ECHO")
     REDIS_URL: Annotated[RedisUrl, Field(..., env="REDIS_URL")]
 
-    JWT_SECRET: str | None = None
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    JWT_SECRET: str = Field(..., env="JWT_SECRET")
+    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     OPENAI_API_KEY: str | None = None

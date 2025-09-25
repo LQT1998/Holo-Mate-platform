@@ -10,12 +10,15 @@ import uvicorn
 from streaming_service.src.api import streaming, devices
 from shared.src.db.session import create_engine, close_engine_async
 from shared.src.utils.redis import close_redis, get_redis
+from shared.src.middleware.auth_middleware import JWTAuthMiddleware
 
 app = FastAPI(
     title="Holo-Mate Streaming Service",
     description="Handles device streaming sessions for the Holo-Mate platform",
     version="1.0.0",
 )
+
+app.add_middleware(JWTAuthMiddleware)
 
 
 @app.on_event("startup")

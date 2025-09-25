@@ -13,12 +13,15 @@ from ai_service.src.exceptions import AppError, app_error_handler
 from ai_service.src.api import ai_companions, conversations, messages, voice_profiles
 from shared.src.db.session import create_engine, close_engine_async
 from shared.src.utils.redis import close_redis, get_redis
+from shared.src.middleware.auth_middleware import JWTAuthMiddleware
 
 app = FastAPI(
     title="Holo-Mate AI Service",
     description="AI companion management and conversation handling for Holo-Mate platform",
     version="1.0.0",
 )
+
+app.add_middleware(JWTAuthMiddleware)
 
 
 @app.on_event("startup")
