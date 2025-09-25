@@ -9,7 +9,7 @@ class UserPreference(Base):
     __tablename__ = "user_preferences"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     language = Column(String, default="en", nullable=False)
     timezone = Column(String, default="UTC", nullable=False)

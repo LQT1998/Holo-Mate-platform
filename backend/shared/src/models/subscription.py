@@ -9,7 +9,7 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     plan_name = Column(String, nullable=False) # e.g., "free", "pro_monthly"
     status = Column(String, nullable=False, default="inactive") # "active", "inactive", "cancelled"
     

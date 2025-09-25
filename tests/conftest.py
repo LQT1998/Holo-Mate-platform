@@ -87,3 +87,15 @@ def authenticated_user_headers():
         "Authorization": "Bearer valid_access_token_here",
         "Content-Type": "application/json"
     }
+
+
+@pytest.fixture
+def valid_conversation_id():
+    """Fixture providing a valid conversation ID for testing"""
+    return "conversation_123"
+
+
+@pytest.fixture
+def valid_access_token():
+    """Fixture providing a valid access token for testing"""
+    return "valid_access_token_here"
