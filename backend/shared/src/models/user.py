@@ -1,8 +1,12 @@
 import uuid
+from typing import TYPE_CHECKING
 from sqlalchemy import Column, String, Boolean, DateTime, func, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 
 from .base import Base, GUID
+
+if TYPE_CHECKING:
+    from .conversation import Conversation
 
 
 class User(Base):
@@ -23,3 +27,8 @@ class User(Base):
     subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin")
     ai_companions = relationship("AICompanion", back_populates="user", cascade="all, delete-orphan", lazy="selectin")
     devices = relationship("HologramDevice", back_populates="user", cascade="all, delete-orphan", lazy="selectin")
+    conversations: Mapped[list["Conversation"]] = relationship(
+        "Conversation",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )

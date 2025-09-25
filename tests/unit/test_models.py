@@ -54,7 +54,7 @@ def test_user_relationships(session):
 
     # Test one-to-many relationships
     user.ai_companions.append(AICompanion(name="Companion1"))
-    user.devices.append(HologramDevice(name="Device1", device_type="mobile"))
+    user.devices.append(HologramDevice(name="Device1", device_type="mobile_app"))
     
     session.add(user)
     session.commit()

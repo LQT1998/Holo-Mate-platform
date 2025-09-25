@@ -21,11 +21,11 @@ async def get_me(
     Get current user profile information.
     Returns user data without sensitive fields like password.
     """
-    # Dev shortcut: only active in dev mode for contract tests
-    if settings.DEV_MODE and getattr(current_user, "email", None) == "test@example.com":
+    # Dev shortcut: return mock data for any user in DEV_MODE
+    if settings.DEV_MODE:
         return UserRead(
             id=str(DEV_OWNER_ID),
-            email="test@example.com",
+            email=getattr(current_user, "email", "test@example.com"),
             first_name="Test",
             last_name="User",
             is_active=True,

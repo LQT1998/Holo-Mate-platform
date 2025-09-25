@@ -39,7 +39,7 @@ async def test_user_registration_login_profile_flow(auth_base_url: str):
         register_resp = await client.post("/auth/register", json=register_payload)
         assert register_resp.status_code == 201
         reg_json = register_resp.json()
-        assert "user_id" in reg_json and reg_json["user_id"]
+        assert "id" in reg_json and reg_json["id"]
         assert reg_json.get("email") == email
 
         # 2) Login

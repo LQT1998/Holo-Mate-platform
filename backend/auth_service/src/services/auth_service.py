@@ -18,8 +18,19 @@ class AuthService:
     
     async def create_token_pair(self, user) -> tuple[str, str]:
         """Create access and refresh token pair for user."""
-        # Placeholder implementation
-        return "access_token", "refresh_token"
+        from shared.src.security.jwt import create_access_token
+        from datetime import timedelta
+        
+        # Create real JWT tokens
+        access_token = create_access_token(
+            data={"sub": str(user.get("email", "unknown"))},
+            expires_delta=timedelta(minutes=30)
+        )
+        refresh_token = create_access_token(
+            data={"sub": str(user.get("email", "unknown")), "type": "refresh"},
+            expires_delta=timedelta(days=7)
+        )
+        return access_token, refresh_token
     
     async def rotate_refresh_token(self, refresh_token: str) -> tuple[object, str, str]:
         """Rotate refresh token to create new token pair."""

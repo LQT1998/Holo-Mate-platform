@@ -3,39 +3,42 @@ Holo-Mate Auth Service
 Authentication and user management service
 """
 
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # Assuming your API routers are in app.api
-from auth_service.src.api import auth, users, subscriptions
-from auth_service.src.config import settings
+from auth_service.src.api import auth, subscriptions, users
 from shared.src.db.session import close_engine, create_engine
-from shared.src.utils.redis import close_redis, get_redis
 from shared.src.middleware.auth_middleware import JWTAuthMiddleware
+from shared.src.utils.redis import close_redis, get_redis
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_engine()
+    await get_redis()
+    try:
+        yield
+    finally:
+        await close_engine()
+        await close_redis()
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Holo-Mate Auth Service",
         description="Authentication and user management for Holo-Mate platform",
         version="1.0.0",
+        lifespan=lifespan,
     )
 
     app.add_middleware(JWTAuthMiddleware)
 
-
-    @app.on_event("startup")
-    async def on_startup() -> None:
-        create_engine()
-        await get_redis()
-
-
-    @app.on_event("shutdown")
-    async def on_shutdown() -> None:
-        await close_redis()
-        await close_engine()
-
-# CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://localhost:3001"],
@@ -44,22 +47,20 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-# Include API routers
     app.include_router(auth.router, prefix="/auth")
-    app.include_router(users.router)
+    app.include_router(users.router, prefix="/users")
     app.include_router(subscriptions.router)
 
-
     @app.get("/auth/profile")
-    async def protected_check(request: Request):
+    async def protected_check(request: Request):  # pragma: no cover - simple helper route
         return {"user": getattr(request.state, "user", None)}
 
     @app.get("/")
-    async def root():
+    async def root():  # pragma: no cover - simple helper route
         return {"message": "Holo-Mate Auth Service", "status": "running"}
 
     @app.get("/health")
-    async def health_check():
+    async def health_check():  # pragma: no cover - simple helper route
         return {"status": "healthy", "service": "auth_service"}
 
     return app

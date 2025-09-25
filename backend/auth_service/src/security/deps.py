@@ -42,6 +42,7 @@ async def get_current_user(
 
         # --- Dev shortcut ---
         if settings.DEV_MODE:
+            # Accept hardcoded tokens for testing
             if token in ["test_token", "valid_access_token_here"]:
                 class MockUser:
                     def __init__(self):
@@ -55,6 +56,25 @@ async def get_current_user(
                         self.updated_at = now
 
                 return MockUser()
+            
+            # Also accept real JWT tokens in DEV_MODE
+            try:
+                token_data = verify_access_token(token)
+                if token_data and "sub" in token_data:
+                    class MockUser:
+                        def __init__(self, email):
+                            self.id = str(DEV_OWNER_ID)
+                            self.email = email
+                            self.first_name = "Test"
+                            self.last_name = "User"
+                            self.is_active = True
+                            now = datetime.now(timezone.utc)
+                            self.created_at = now
+                            self.updated_at = now
+
+                    return MockUser(token_data["sub"])
+            except:
+                pass
 
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

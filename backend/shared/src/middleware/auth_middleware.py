@@ -15,6 +15,10 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
     """Middleware that verifies JWT Bearer tokens on incoming requests."""
 
     async def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:
+        # Skip authentication for auth endpoints and health checks
+        if request.url.path in ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh"]:
+            return await call_next(request)
+            
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(
