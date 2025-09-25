@@ -78,3 +78,12 @@ def db_session() -> Generator[sessionmaker, None, None]:
     finally:
         session.close()
         engine.dispose()
+
+
+@pytest.fixture
+def authenticated_user_headers():
+    """Fixture providing authenticated user headers for testing"""
+    return {
+        "Authorization": "Bearer valid_access_token_here",
+        "Content-Type": "application/json"
+    }

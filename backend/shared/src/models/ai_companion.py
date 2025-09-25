@@ -9,7 +9,7 @@ class AICompanion(Base):
     __tablename__ = "ai_companions"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     personality = Column(JSON, nullable=True)

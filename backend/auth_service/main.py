@@ -37,7 +37,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.add_middleware(JWTAuthMiddleware)
+    app.add_middleware(JWTAuthMiddleware, exclude_paths=["/subscriptions", "/auth/register", "/auth/login", "/auth/refresh"])
 
     app.add_middleware(
         CORSMiddleware,

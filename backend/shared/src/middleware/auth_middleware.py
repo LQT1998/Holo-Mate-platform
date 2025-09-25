@@ -14,9 +14,15 @@ from shared.src.security.jwt import JWTErrorResponse, verify_access_token
 class JWTAuthMiddleware(BaseHTTPMiddleware):
     """Middleware that verifies JWT Bearer tokens on incoming requests."""
 
+    def __init__(self, app, exclude_paths: list[str] | None = None):
+        super().__init__(app)
+        # Default exclude paths
+        default_exclude = ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh"]
+        self.exclude_paths = set(exclude_paths or [] + default_exclude)
+
     async def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:
-        # Skip authentication for auth endpoints and health checks
-        if request.url.path in ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh"]:
+        # Skip authentication for excluded paths
+        if request.url.path in self.exclude_paths:
             return await call_next(request)
             
         auth_header = request.headers.get("Authorization")
