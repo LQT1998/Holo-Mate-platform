@@ -4,23 +4,10 @@ Pydantic schemas for HologramDevice entity
 
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from enum import Enum
 from pydantic import BaseModel, Field
 import uuid
 
-
-class DeviceType(str, Enum):
-    hologram_fan = "hologram_fan"
-    mobile_app = "mobile_app"
-    web_app = "web_app"
-    unity_client = "unity_client"
-
-
-class DeviceStatus(str, Enum):
-    online = "online"
-    offline = "offline"
-    unpaired = "unpaired"
-    error = "error"
+from shared.src.enums.device_enums import DeviceStatus, DeviceType
 
 
 class DeviceBase(BaseModel):

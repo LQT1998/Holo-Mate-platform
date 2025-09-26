@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, DateTime, func, ForeignKey, JSON, Enum as
 from sqlalchemy.orm import relationship
 
 from .base import Base, GUID
-from shared.src.schemas.device_schema import DeviceType, DeviceStatus
+from shared.src.enums.device_enums import DeviceStatus, DeviceType
 
 
 class HologramDevice(Base):
