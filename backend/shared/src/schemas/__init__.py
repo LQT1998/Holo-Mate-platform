@@ -22,12 +22,7 @@ from .ai_companion_schema import (
     AICompanionResponse,
 )
 
-# Conversation schemas
-from .conversation_schema import (
-    ConversationCreate,
-    ConversationUpdate,
-    ConversationResponse,
-)
+# Conversation schemas - moved to ai_service/src/schemas/conversation.py
 
 # Message schemas
 from .message_schema import (
@@ -98,10 +93,7 @@ __all__ = [
     "AICompanionCreate",
     "AICompanionUpdate",
     "AICompanionResponse",
-    # Conversation schemas
-    "ConversationCreate",
-    "ConversationUpdate",
-    "ConversationResponse",
+    # Conversation schemas - moved to ai_service
     # Message schemas
     "MessageCreate",
     "MessageResponse",

@@ -9,6 +9,9 @@ import uuid
 
 from ai_service.src.security.deps import get_current_user
 from ai_service.src.config import settings
+from ai_service.src.services.conversation_service import ConversationService
+from shared.src.db.session import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ai_service.src.schemas.conversation import (
     ConversationListResponse,
@@ -116,6 +119,7 @@ async def list_conversations(
     sort_order: Optional[Literal["asc", "desc"]] = "desc",
     include_metadata: Optional[bool] = False,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     if settings.DEV_MODE:
         now = datetime.now(timezone.utc)
@@ -205,7 +209,50 @@ async def list_conversations(
 
         return ConversationListResponse(**response_data)
 
-    raise HTTPException(status_code=501, detail="Conversations listing not implemented in production mode yet")
+    # Non-DEV path: use ConversationService
+    service = ConversationService(db)
+    conversations = await service.list_conversations(uuid.UUID(str(current_user["id"])))
+    
+    # Basic pagination and filtering (simplified for now)
+    total = len(conversations)
+    total_pages = (total + per_page - 1) // per_page
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated = conversations[start_idx:end_idx]
+    
+    # Map to response format
+    items = [
+        ConversationRead(
+            id=c.id,
+            user_id=c.user_id,
+            title=c.title,
+            companion_id=c.ai_companion_id,
+            status=c.status,
+            created_at=c.created_at,
+            updated_at=c.updated_at,
+            last_message_at=None,  # TODO: implement when messages are added
+            message_count=0,  # TODO: implement when messages are added
+            metadata=None,
+            settings=None,
+        )
+        for c in paginated
+    ]
+    
+    return ConversationListResponse(
+        conversations=items,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+        filters={
+            "companion_id": companion_id,
+            "status": status,
+            "search": search,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+        sorting={"sort_by": sort_by, "sort_order": sort_order},
+    )
 
 
 @router.post("/conversations", response_model=ConversationRead, status_code=status.HTTP_201_CREATED)
