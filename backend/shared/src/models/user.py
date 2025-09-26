@@ -7,6 +7,7 @@ from .base import Base, GUID
 
 if TYPE_CHECKING:
     from .conversation import Conversation
+    from .streaming_session import StreamingSession
 
 
 class User(Base):
@@ -29,6 +30,11 @@ class User(Base):
     devices = relationship("HologramDevice", back_populates="user", cascade="all, delete-orphan", lazy="selectin")
     conversations: Mapped[list["Conversation"]] = relationship(
         "Conversation",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    streaming_sessions: Mapped[list["StreamingSession"]] = relationship(
+        "StreamingSession",
         back_populates="user",
         cascade="all, delete-orphan"
     )

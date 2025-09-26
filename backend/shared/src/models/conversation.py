@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .user import User
     from .ai_companion import AICompanion
     from .message import Message
+    from .streaming_session import StreamingSession
 
 
 class Conversation(Base):
@@ -27,3 +28,4 @@ class Conversation(Base):
     user: Mapped["User"] = relationship("User", back_populates="conversations")
     ai_companion: Mapped["AICompanion"] = relationship("AICompanion", back_populates="conversations")
     messages: Mapped[list["Message"]] = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+    streaming_sessions: Mapped[list["StreamingSession"]] = relationship("StreamingSession", back_populates="conversation", cascade="all, delete-orphan")

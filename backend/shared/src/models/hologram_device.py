@@ -27,3 +27,4 @@ class HologramDevice(Base):
 
     # Relationships
     user = relationship("User", back_populates="devices")
+    streaming_sessions = relationship("StreamingSession", back_populates="device", cascade="all, delete-orphan")

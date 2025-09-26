@@ -23,3 +23,4 @@ class AICompanion(Base):
     conversations = relationship("Conversation", back_populates="ai_companion", cascade="all, delete-orphan")
     character_asset = relationship("CharacterAsset", back_populates="ai_companion", uselist=False, cascade="all, delete-orphan")
     voice_profile = relationship("VoiceProfile", back_populates="ai_companion", uselist=False, cascade="all, delete-orphan")
+    streaming_sessions = relationship("StreamingSession", back_populates="companion", cascade="all, delete-orphan")

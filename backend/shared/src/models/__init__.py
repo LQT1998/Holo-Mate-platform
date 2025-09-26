@@ -10,6 +10,7 @@ from .voice_profile import VoiceProfile
 from .user_preference import UserPreference
 from .character_asset import CharacterAsset
 from .animation_sequence import AnimationSequence
+from .streaming_session import StreamingSession
 
 __all__ = [
     "Base",
@@ -24,4 +25,5 @@ __all__ = [
     "UserPreference",
     "CharacterAsset",
     "AnimationSequence",
+    "StreamingSession",
 ]
