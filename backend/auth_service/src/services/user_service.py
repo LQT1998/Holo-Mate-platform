@@ -20,6 +20,9 @@ class UserService:
         user = User(
             email=user_create.email,
             hashed_password=hashed_password,
+            first_name=user_create.first_name,
+            last_name=user_create.last_name,
+            is_active=True,  # Default to active
         )
         self.db.add(user)
         await self.db.commit()
@@ -36,7 +39,7 @@ class UserService:
         result = await self.db.execute(select(User).where(User.id == user_id))
         return result.scalars().first()
 
-    async def update_user(self, user_id: int, updates: dict) -> User | None:
+    async def update_user(self, user_id: Union[UUID, str], updates: dict) -> Optional[User]:
         """Update user fields and persist.
 
         Args:
@@ -51,7 +54,11 @@ class UserService:
             return None
 
         for field_name, field_value in updates.items():
-            setattr(user, field_name, field_value)
+            # Special handling for password - hash it before storing
+            if field_name == "password":
+                setattr(user, "hashed_password", get_password_hash(field_value))
+            else:
+                setattr(user, field_name, field_value)
 
         await self.db.commit()
         await self.db.refresh(user)
@@ -66,6 +73,6 @@ class UserService:
         user = await self.get_user_by_id(user_id)
         if not user:
             return None
-        await self.db.delete(user)
+        self.db.delete(user)  # delete() is not async
         await self.db.commit()
         return user
