@@ -134,7 +134,7 @@ def test_device_model_creation(session):
     retrieved_device = session.query(HologramDevice).get(device.id)
     assert retrieved_device is not None
     assert retrieved_device.name == "Living Room Holo-Fan"
-    assert retrieved_device.status == "offline"
+    assert retrieved_device.status.value == "offline"
 
 def test_asset_and_animation_models(session):
     """Test CharacterAsset and AnimationSequence models and their relationship."""
