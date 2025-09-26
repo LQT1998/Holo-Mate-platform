@@ -2,21 +2,116 @@
 Messages API endpoints for AI service
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Query
 from datetime import datetime, timezone
 import uuid
+from typing import List
 
 from ai_service.src.security.deps import get_current_user
 from ai_service.src.config import settings
+from ai_service.src.services.message_service import MessageService
+from shared.src.db.session import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.src.schemas.message_schema import (
     MessageCreate,
     MessageResponse,
+    MessageListResponse,
 )
 from ai_service.src.schemas.ai_companion import DeleteResponse
 from shared.src.constants import DEV_OWNER_ID
 
 router = APIRouter(tags=["Messages"])
+
+
+@router.get("/conversations/{conversation_id}/messages", response_model=MessageListResponse)
+async def list_messages(
+    conversation_id: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Messages per page"),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MessageListResponse:
+    """List messages in a conversation with pagination"""
+    if settings.DEV_MODE:
+        # Mock response for DEV mode
+        if conversation_id == "nonexistent_conversation_456":
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        if conversation_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+        
+        if str(current_user.get("id")) != str(DEV_OWNER_ID):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
+        
+        # Mock messages
+        now = datetime.now(timezone.utc)
+        conv_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"dev:conversation:{conversation_id}")
+        
+        mock_messages = [
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="user",
+                content="Hello, this is a test message",
+                content_type="text",
+                created_at=now,
+                updated_at=now,
+            ),
+            MessageResponse(
+                id=uuid.uuid4(),
+                conversation_id=conv_uuid,
+                role="companion",
+                content="Hello! How can I help you today?",
+                content_type="text",
+                created_at=now,
+                updated_at=now,
+            ),
+        ]
+        
+        total = len(mock_messages)
+        total_pages = (total + per_page - 1) // per_page
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated = mock_messages[start_idx:end_idx]
+        
+        return MessageListResponse(
+            messages=paginated,
+            total=total,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+        )
+    else:
+        # Non-DEV path: use MessageService
+        service = MessageService(db)
+        conversation_uuid = uuid.UUID(conversation_id)
+        user_uuid = uuid.UUID(str(current_user["id"]))
+        
+        messages = await service.list_messages(user_uuid, conversation_uuid, page, per_page)
+        total = await service.count_messages(user_uuid, conversation_uuid)
+        total_pages = (total + per_page - 1) // per_page
+        
+        # Convert to response format
+        message_responses = [
+            MessageResponse(
+                id=msg.id,
+                conversation_id=msg.conversation_id,
+                role=msg.role,
+                content=msg.content,
+                content_type=msg.content_type,
+                created_at=msg.created_at,
+                updated_at=msg.updated_at,
+            )
+            for msg in messages
+        ]
+        
+        return MessageListResponse(
+            messages=message_responses,
+            total=total,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+        )
 
 
 def _validate_id_format_raw(id_str: str, id_type: str = "message") -> None:
@@ -36,99 +131,152 @@ def normalize_message_id(message_id: str) -> uuid.UUID:
         return uuid.uuid5(uuid.NAMESPACE_URL, f"dev:message:{message_id}")
 
 
-@router.post("/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/conversations/{conversation_id}/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def create_message(
+    conversation_id: str,
     message_data: MessageCreate,
     response: Response,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
-    if not settings.DEV_MODE:
-        raise HTTPException(status_code=501, detail="Not implemented")
+    """Create a new message in a conversation"""
+    if settings.DEV_MODE:
+        # Mock response for DEV mode
+        _validate_id_format_raw(conversation_id, "conversation")
 
-    conv_id_str = str(message_data.conversation_id)
-    _validate_id_format_raw(conv_id_str, "conversation")
+        try:
+            conversation_uuid = uuid.UUID(conversation_id)
+        except ValueError:
+            conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"dev:conversation:{conversation_id}")
 
-    try:
-        conversation_uuid = uuid.UUID(conv_id_str)
-    except ValueError:
-        conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"dev:conversation:{conv_id_str}")
+        if conversation_id == "nonexistent_conversation_456":
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        if conversation_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
 
-    if conv_id_str == "nonexistent_conversation_456":
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    if conv_id_str == "forbidden_999":
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
+        if str(current_user.get("id")) != str(DEV_OWNER_ID):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
 
-    if str(current_user.get("id")) != str(DEV_OWNER_ID):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
+        now = datetime.now(timezone.utc)
+        message_uuid = uuid.uuid4()
 
-    now = datetime.now(timezone.utc)
-    message_uuid = uuid.uuid4()
+        created_message = MessageResponse(
+            id=message_uuid,
+            conversation_id=conversation_uuid,
+            role=message_data.role,
+            content=message_data.content,
+            content_type=message_data.content_type,
+            created_at=now,
+            updated_at=now,
+        )
 
-    created_message = MessageResponse(
-        id=message_uuid,
-        conversation_id=conversation_uuid,
-        role=message_data.role,
-        content=message_data.content,
-        content_type=message_data.content_type,
-        created_at=now,
-        updated_at=now,
-    )
-
-    response.headers["Location"] = f"/messages/{message_uuid}"
-    return created_message
+        response.headers["Location"] = f"/messages/{message_uuid}"
+        return created_message
+    else:
+        # Non-DEV path: use MessageService
+        service = MessageService(db)
+        conversation_uuid = uuid.UUID(conversation_id)
+        user_uuid = uuid.UUID(str(current_user["id"]))
+        
+        message = await service.create_message(user_uuid, conversation_uuid, message_data)
+        
+        response.headers["Location"] = f"/messages/{message.id}"
+        return MessageResponse(
+            id=message.id,
+            conversation_id=message.conversation_id,
+            role=message.role,
+            content=message.content,
+            content_type=message.content_type,
+            created_at=message.created_at,
+            updated_at=message.updated_at,
+        )
 
 
 @router.get("/messages/{message_id}", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 async def get_message(
     message_id: str,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
-    if not settings.DEV_MODE:
-        raise HTTPException(status_code=501, detail="Not implemented")
+    """Get a specific message by ID"""
+    if settings.DEV_MODE:
+        # Mock response for DEV mode
+        if message_id == "nonexistent_message_456":
+            raise HTTPException(status_code=404, detail="Message not found")
+        if message_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
 
-    if message_id == "nonexistent_message_456":
-        raise HTTPException(status_code=404, detail="Message not found")
-    if message_id == "forbidden_999":
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
+        message_uuid = normalize_message_id(message_id)
 
-    message_uuid = normalize_message_id(message_id)
+        if str(current_user.get("id")) != str(DEV_OWNER_ID):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
 
-    if str(current_user.get("id")) != str(DEV_OWNER_ID):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
+        now = datetime.now(timezone.utc)
+        conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, "dev:conversation:conversation_123")
 
-    now = datetime.now(timezone.utc)
-    conversation_uuid = uuid.uuid5(uuid.NAMESPACE_URL, "dev:conversation:conversation_123")
-
-    return MessageResponse(
-        id=message_uuid,
-        conversation_id=conversation_uuid,
-        role="user",
-        content="Hello, this is a test message",
-        content_type="text",
-        created_at=now,
-        updated_at=now,
-    )
+        return MessageResponse(
+            id=message_uuid,
+            conversation_id=conversation_uuid,
+            role="user",
+            content="Hello, this is a test message",
+            content_type="text",
+            created_at=now,
+            updated_at=now,
+        )
+    else:
+        # Non-DEV path: use MessageService
+        service = MessageService(db)
+        message_uuid = uuid.UUID(message_id)
+        user_uuid = uuid.UUID(str(current_user["id"]))
+        
+        message = await service.get_message_by_id(user_uuid, message_uuid)
+        
+        return MessageResponse(
+            id=message.id,
+            conversation_id=message.conversation_id,
+            role=message.role,
+            content=message.content,
+            content_type=message.content_type,
+            created_at=message.created_at,
+            updated_at=message.updated_at,
+        )
 
 
 @router.delete("/messages/{message_id}", response_model=DeleteResponse, status_code=status.HTTP_200_OK)
 async def delete_message(
     message_id: str,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> DeleteResponse:
-    if not settings.DEV_MODE:
-        raise HTTPException(status_code=501, detail="Not implemented")
+    """Delete a message by ID"""
+    if settings.DEV_MODE:
+        # Mock response for DEV mode
+        if message_id == "nonexistent_message_456":
+            raise HTTPException(status_code=404, detail="Message not found")
+        if message_id == "forbidden_999":
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
 
-    if message_id == "nonexistent_message_456":
-        raise HTTPException(status_code=404, detail="Message not found")
-    if message_id == "forbidden_999":
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
+        message_uuid = normalize_message_id(message_id)
 
-    message_uuid = normalize_message_id(message_id)
+        if str(current_user.get("id")) != str(DEV_OWNER_ID):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
 
-    if str(current_user.get("id")) != str(DEV_OWNER_ID):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this message")
-
-    return DeleteResponse(
-        message="Message deleted successfully",
-        deleted_id=str(message_uuid),
-    )
+        return DeleteResponse(
+            message="Message deleted successfully",
+            deleted_id=str(message_uuid),
+        )
+    else:
+        # Non-DEV path: use MessageService
+        service = MessageService(db)
+        message_uuid = uuid.UUID(message_id)
+        user_uuid = uuid.UUID(str(current_user["id"]))
+        
+        deleted = await service.delete_message(user_uuid, message_uuid)
+        
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        return DeleteResponse(
+            message="Message deleted successfully",
+            deleted_id=str(message_uuid),
+        )

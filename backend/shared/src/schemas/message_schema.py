@@ -13,9 +13,6 @@ class MessageCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=10000)
     role: Literal["user", "companion"]
     content_type: Literal["text", "audio_url"] = "text"
-    conversation_id: str = Field(
-        ..., description="Conversation identifier (UUID in prod, friendly ID in DEV)"
-    )
 
 
 class MessageResponse(BaseModel):
