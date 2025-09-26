@@ -16,7 +16,7 @@ from ai_service.src.schemas.ai_companion import (
 from ai_service.src.config import settings
 from shared.src.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from ai_service.src.services.companion_service import CompanionService
+from ai_service.src.services.ai_companion_service import CompanionService
 from shared.src.constants import (
     DEV_KNOWN_COMPANION_ID,
     DEV_FORBIDDEN_ID,
