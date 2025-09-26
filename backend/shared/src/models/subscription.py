@@ -1,8 +1,9 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, func, ForeignKey, Numeric, JSON
+from sqlalchemy import Column, String, DateTime, func, ForeignKey, Numeric, JSON, Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from .base import Base, GUID
+from shared.src.enums.subscription_enums import SubscriptionStatus
 
 
 class Subscription(Base):
@@ -11,11 +12,12 @@ class Subscription(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     plan_name = Column(String, nullable=False) # e.g., "free", "pro_monthly"
-    status = Column(String, nullable=False, default="inactive") # "active", "inactive", "cancelled"
+    status = Column(SAEnum(SubscriptionStatus, name="subscription_status_enum"), nullable=False, default=SubscriptionStatus.inactive)
     
     start_date = Column(DateTime, default=func.now(), nullable=False)
     end_date = Column(DateTime)
     next_billing_date = Column(DateTime)
+    canceled_at = Column(DateTime, nullable=True)
     
     price = Column(Numeric(10, 2))
     currency = Column(String(3))
