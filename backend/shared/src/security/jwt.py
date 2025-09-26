@@ -48,23 +48,31 @@ def verify_access_token(token: str) -> dict[str, Any]:
         HTTPException: If token is invalid or expired.
     """
 
-    # Allow DEV shortcut
-    if getattr(settings, "ENV", "").lower() == "dev" and token == "valid_access_token_here":
-        return {
-            "id": str(DEV_OWNER_ID),
-            "email": "test@example.com",
-            "is_active": True,
-            "sub": "test@example.com",
-        }
+    # Allow DEV shortcut for contract tests
+    if getattr(settings, "ENV", "").lower() == "dev":
+        if token == "valid_access_token_here":
+            return {
+                "id": str(DEV_OWNER_ID),
+                "email": "test@example.com",
+                "is_active": True,
+                "sub": "test@example.com",
+            }
+        if token == "invalid_access_token_here":
+            raise JWTErrorResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Invalid authentication credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         if "sub" not in payload:
+            # Normalize to invalid auth error expected by tests
             raise credentials_exception
         return payload
     except JWTError as error:

@@ -14,16 +14,16 @@ def base_url() -> str:
 
 
 @pytest.fixture
-def dev_access_token() -> str:
+def valid_access_token_here() -> str:
     # In a real scenario, this would generate a valid JWT.
     # For dev mode, a simple string is sufficient if the endpoint logic checks for it.
-    return "dev_access_token"
+    return "valid_access_token_here"
 
 
 @pytest.mark.asyncio
 class TestStreamingSessionCreate:
     async def test_create_session_success_returns_201(
-        self, base_url: str, dev_access_token: str
+        self, base_url: str, valid_access_token_here: str
     ):
         """Test successful creation of a streaming session returns 201."""
         payload = {
@@ -31,7 +31,7 @@ class TestStreamingSessionCreate:
             "settings": {"quality": "1080p"},
         }
         headers = {
-            "Authorization": f"Bearer {dev_access_token}",
+            "Authorization": f"Bearer {valid_access_token_here}",
             "Content-Type": "application/json",
         }
 
@@ -49,11 +49,11 @@ class TestStreamingSessionCreate:
         assert response.headers["Location"].startswith("/streaming/sessions/")
 
     async def test_create_session_invalid_device_id_returns_422(
-        self, base_url: str, dev_access_token: str
+        self, base_url: str, valid_access_token_here: str
     ):
         """Test creating a session with a known invalid device ID returns 422."""
         payload = {"device_id": "invalid_device_id"}
-        headers = {"Authorization": f"Bearer {dev_access_token}"}
+        headers = {"Authorization": f"Bearer {valid_access_token_here}"}
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -64,11 +64,11 @@ class TestStreamingSessionCreate:
         assert "Invalid device ID format" in response.text
 
     async def test_create_session_nonexistent_device_id_returns_404(
-        self, base_url: str, dev_access_token: str
+        self, base_url: str, valid_access_token_here: str
     ):
         """Test creating a session with a nonexistent device ID returns 404."""
         payload = {"device_id": "nonexistent_device_456"}
-        headers = {"Authorization": f"Bearer {dev_access_token}"}
+        headers = {"Authorization": f"Bearer {valid_access_token_here}"}
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -79,11 +79,11 @@ class TestStreamingSessionCreate:
         assert "Device not found" in response.text
 
     async def test_create_session_forbidden_device_id_returns_403(
-        self, base_url: str, dev_access_token: str
+        self, base_url: str, valid_access_token_here: str
     ):
         """Test creating a session with a forbidden device ID returns 403."""
         payload = {"device_id": "forbidden_999"}
-        headers = {"Authorization": f"Bearer {dev_access_token}"}
+        headers = {"Authorization": f"Bearer {valid_access_token_here}"}
 
         async with httpx.AsyncClient() as client:
             response = await client.post(

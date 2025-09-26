@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 @pytest.mark.asyncio
 async def test_multi_user_conversation_flow(
-    client: AsyncClient, 
+    ai_client: AsyncClient, 
     db_session: Session, 
     authenticated_user_headers: dict, 
     another_authenticated_user_headers: dict
@@ -24,28 +24,28 @@ async def test_multi_user_conversation_flow(
     # Step 1: User A creates a conversation
     companion_id = "some_companion_id"
     conv_payload = {"ai_companion_id": companion_id, "title": "Multi-user chat"}
-    conv_response = await client.post("/conversations", json=conv_payload, headers=authenticated_user_headers)
+    conv_response = await ai_client.post("/conversations", json=conv_payload, headers=authenticated_user_headers)
     assert conv_response.status_code == 201
     conversation_id = conv_response.json()["id"]
 
     # Invite User B (assuming an endpoint exists)
     # invite_payload = {"user_id": "user_b_id"}
-    # await client.post(f"/conversations/{conversation_id}/invite", json=invite_payload, headers=authenticated_user_headers)
+    # await ai_client.post(f"/conversations/{conversation_id}/invite", json=invite_payload, headers=authenticated_user_headers)
 
     # Step 2: User B joins/sees the conversation
-    # list_conv_B = await client.get("/conversations", headers=another_authenticated_user_headers)
+    # list_conv_B = await ai_client.get("/conversations", headers=another_authenticated_user_headers)
     # assert any(c["id"] == conversation_id for c in list_conv_B.json()["conversations"])
 
     # Step 3: User A sends a message
     msg_A = {"content": "Hello User B!"}
-    await client.post(f"/conversations/{conversation_id}/messages", json=msg_A, headers=authenticated_user_headers)
+    await ai_client.post(f"/conversations/{conversation_id}/messages", json=msg_A, headers=authenticated_user_headers)
 
     # Step 4: User B sees it and replies
-    # history_B = await client.get(f"/conversations/{conversation_id}/messages", headers=another_authenticated_user_headers)
+    # history_B = await ai_client.get(f"/conversations/{conversation_id}/messages", headers=another_authenticated_user_headers)
     # assert history_B.json()["messages"][-1]["content"] == "Hello User B!"
     
     # msg_B = {"content": "Hi User A!"}
-    # await client.post(f"/conversations/{conversation_id}/messages", json=msg_B, headers=another_authenticated_user_headers)
+    # await ai_client.post(f"/conversations/{conversation_id}/messages", json=msg_B, headers=another_authenticated_user_headers)
     
     # Step 5: AI responds and everyone sees it.
     pass # Placeholder for a complex, future-feature test

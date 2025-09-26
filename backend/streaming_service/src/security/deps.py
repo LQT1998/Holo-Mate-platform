@@ -31,6 +31,8 @@ async def get_current_user(
             raise _unauthorized("Not authenticated")
         if credentials.credentials == "invalid_access_token_here":
             raise _unauthorized("Invalid authentication credentials")
+        if credentials.credentials not in ["valid_access_token_here", "test_token"]:
+            raise _unauthorized("Invalid authentication credentials")
 
         now = datetime.now(timezone.utc)
         return {

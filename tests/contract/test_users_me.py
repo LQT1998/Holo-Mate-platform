@@ -24,7 +24,7 @@ class TestGetUsersMe:
     def valid_access_token(self) -> str:
         """Valid access token for authenticated requests"""
         # Use simple test token for dev mode
-        return "test_token"
+        return "valid_access_token_here"
     
     @pytest.fixture
     def invalid_access_token(self) -> str:
@@ -49,13 +49,13 @@ class TestGetUsersMe:
     @pytest.mark.asyncio
     async def test_get_user_me_success_returns_200_and_user_data(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str
     ):
         """Test successful user profile retrieval returns 200 with user data"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -87,13 +87,13 @@ class TestGetUsersMe:
     @pytest.mark.asyncio
     async def test_get_user_me_no_password_in_response(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str
     ):
         """Test that password field is not included in response"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -111,12 +111,12 @@ class TestGetUsersMe:
     @pytest.mark.asyncio
     async def test_get_user_me_missing_auth_returns_401(
         self, 
-        base_url: str
+        auth_base_url: str
     ):
         """Test missing authorization header returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={"Content-Type": "application/json"}
             )
             
@@ -133,13 +133,13 @@ class TestGetUsersMe:
     @pytest.mark.asyncio
     async def test_get_user_me_invalid_token_returns_401(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         invalid_access_token: str
     ):
         """Test invalid access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {invalid_access_token}",
                     "Content-Type": "application/json"
@@ -159,13 +159,13 @@ class TestGetUsersMe:
     @pytest.mark.asyncio
     async def test_get_user_me_expired_token_returns_401(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         expired_access_token: str
     ):
         """Test expired access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {expired_access_token}",
                     "Content-Type": "application/json"

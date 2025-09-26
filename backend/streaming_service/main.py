@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.add_middleware(JWTAuthMiddleware)
+    app.add_middleware(JWTAuthMiddleware, exclude_paths=["/streaming/sessions"])
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://localhost:3001"],

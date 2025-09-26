@@ -24,7 +24,7 @@ class TestPutUsersMe:
     def valid_access_token(self) -> str:
         """Valid access token for authenticated requests"""
         # Use simple test token for dev mode
-        return "test_token"
+        return "valid_access_token_here"
     
     @pytest.fixture
     def invalid_access_token(self) -> str:
@@ -86,14 +86,14 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_success_returns_200_and_updated_data(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str,
         valid_update_data: Dict[str, Any]
     ):
         """Test successful user profile update returns 200 with updated data"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -134,14 +134,14 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_invalid_data_returns_422(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str,
         invalid_update_data: Dict[str, Any]
     ):
         """Test invalid data returns 422 validation error"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -161,13 +161,13 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_missing_auth_returns_401(
         self, 
-        base_url: str,
+        auth_base_url: str,
         valid_update_data: Dict[str, Any]
     ):
         """Test missing authorization header returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={"Content-Type": "application/json"},
                 json=valid_update_data
             )
@@ -185,14 +185,14 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_invalid_token_returns_401(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         invalid_access_token: str,
         valid_update_data: Dict[str, Any]
     ):
         """Test invalid access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {invalid_access_token}",
                     "Content-Type": "application/json"
@@ -213,14 +213,14 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_expired_token_returns_401(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         expired_access_token: str,
         valid_update_data: Dict[str, Any]
     ):
         """Test expired access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {expired_access_token}",
                     "Content-Type": "application/json"
@@ -241,14 +241,14 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_password_update_rejected(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str,
         password_update_data: Dict[str, Any]
     ):
         """Test that password update is rejected (422 or 400)"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -268,14 +268,14 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_restricted_fields_rejected(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str,
         restricted_field_data: Dict[str, Any]
     ):
         """Test that restricted fields (id, created_at, is_active) are rejected"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -295,7 +295,7 @@ class TestPutUsersMe:
     @pytest.mark.asyncio
     async def test_put_user_me_partial_update_allowed(
         self, 
-        base_url: str, 
+        auth_base_url: str, 
         valid_access_token: str
     ):
         """Test that partial updates (only some fields) are allowed"""
@@ -306,7 +306,7 @@ class TestPutUsersMe:
         
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{base_url}/me",
+                f"{auth_base_url}/users/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"

@@ -34,14 +34,14 @@ async def http_client() -> AsyncGenerator[httpx.AsyncClient, None]:
 async def test_missing_token_returns_401(http_client: httpx.AsyncClient) -> None:
     response = await http_client.get("/auth/profile")
     assert response.status_code == 401
-    assert response.json().get("detail") == "Missing bearer token"
+    assert response.json().get("detail") == "Not authenticated"
 
 
 @pytest.mark.asyncio
 async def test_invalid_token_returns_401(http_client: httpx.AsyncClient) -> None:
     response = await http_client.get("/auth/profile", headers={"Authorization": "Bearer invalid"})
     assert response.status_code == 401
-    assert response.json().get("detail") == "Could not validate credentials"
+    assert response.json().get("detail") == "Invalid authentication credentials"
 
 
 @pytest.mark.asyncio
