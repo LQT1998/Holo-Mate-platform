@@ -80,21 +80,42 @@
 - [✓] T036 [P] Contract test GET /voice-profiles in tests/contract/test_voice_profiles_list.py
 
 ### Integration Tests (User Stories)
-- [⚠️] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py (FAILING - needs fix)
-- [⚠️] T038 [P] Integration test AI companion creation in tests/integration/test_companion_creation.py (FAILING - needs fix)
-- [⚠️] T039 [P] Integration test voice conversation flow in tests/integration/test_voice_conversation.py (FAILING - needs fix)
-- [⚠️] T040 [P] Integration test device pairing in tests/integration/test_device_pairing.py (FAILING - needs fix)
-- [⚠️] T041 [P] Integration test subscription management in tests/integration/test_subscription_management.py (FAILING - needs fix)
-- [⚠️] T042 [P] Integration test multi-device sync in tests/integration/test_multi_device_sync.py (FAILING - needs fix)
-- [⚠️] T043 [P] Integration test GDPR compliance in tests/integration/test_gdpr_compliance.py (FAILING - needs fix)
+- [⚠️] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py (PARTIALLY FIXED - still failing)
+- [⚠️] T038 [P] Integration test AI companion creation in tests/integration/test_companion_creation.py (PARTIALLY FIXED - still failing)
+- [⚠️] T039 [P] Integration test voice conversation flow in tests/integration/test_voice_conversation.py (PARTIALLY FIXED - still failing)
+- [⚠️] T040 [P] Integration test device pairing in tests/integration/test_device_pairing.py (PARTIALLY FIXED - still failing)
+- [⚠️] T041 [P] Integration test subscription management in tests/integration/test_subscription_management.py (PARTIALLY FIXED - still failing)
+- [⚠️] T042 [P] Integration test multi-device sync in tests/integration/test_multi_device_sync.py (PARTIALLY FIXED - still failing)
+- [⚠️] T043 [P] Integration test GDPR compliance in tests/integration/test_gdpr_compliance.py (PARTIALLY FIXED - still failing)
 - [✓] T044 [P] Integration test full-duplex streaming in tests/integration/test_full_duplex_streaming.py (CREATED - placeholder)
-- [⚠️] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py (FAILING - needs fix)
-- [⚠️] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py (FAILING - needs fix)
+- [⚠️] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py (PARTIALLY FIXED - still failing)
+- [⚠️] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py (PARTIALLY FIXED - still failing)
 
 ### New Contract tests for Streaming Service
 - [✓] T040b [P] Contract test POST /streaming/sessions in tests/contract/test_streaming_sessions.py
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
+
+### Progress Update - Major Regression Fixes (Phase 3.3.1)
+**Status**: Major regression fixes completed - reduced failed tests from 50 to 42 (16% improvement)
+
+**Completed Fixes**:
+- [✓] T047-T055: All data models implemented and fixed (CharacterAsset model issues resolved)
+- [✓] T057-T064: All service layers implemented with proper error handling
+- [✓] T070-T085: All API endpoints implemented with DEV mode support
+- [✓] Conversation validation fixes: 422 for empty payloads, 404 for nonexistent companions, 403 for unauthorized
+- [✓] Authentication fixes: token blacklist implementation for DEV mode
+- [✓] Device pairing fixes: device_type alias mapping (HOLO_PAD_V1 -> hologram_fan)
+- [✓] Messages API fixes: correct endpoint paths and parameter handling
+- [✓] Subscription alias fixes: premium_monthly -> pro_monthly mapping
+
+**Current Test Status** (as of latest regression test):
+- ✅ **PASSED**: 382 tests (88.4%)
+- ❌ **FAILED**: 42 tests (9.7%) 
+- ⚠️ **ERRORS**: 11 tests (2.5%) - mainly service layer database connection issues
+- ⏭️ **SKIPPED**: 2 tests (0.5%)
+
+**Next Phase**: Fix remaining service layer errors and contract test failures
 
 ### Data Models (Entities)
 - [✓] T047 [P] User model in backend/shared/src/models/user.py
@@ -119,14 +140,14 @@
 - [✓] T064 [P] VoiceProfileService in backend/ai_service/src/services/voice_profile_service.py
 
 ### CLI Commands
-- [ ] T065 [P] CLI --create-user in backend/auth_service/src/cli/user_commands.py
-- [ ] T066 [P] CLI --create-companion in backend/ai_service/src/cli/companion_commands.py
-- [ ] T067 [P] CLI --start-conversation in backend/ai_service/src/cli/conversation_commands.py
-- [ ] T068 [P] CLI --register-device in backend/streaming_service/src/cli/device_commands.py
-- [ ] T069 [P] CLI --test-streaming in backend/streaming_service/src/cli/streaming_commands.py
+- [⚠️] T065 [P] CLI --create-user in backend/auth_service/src/cli/user_commands.py (PARTIALLY IMPLEMENTED - needs service layer fixes)
+- [⚠️] T066 [P] CLI --create-companion in backend/ai_service/src/cli/companion_commands.py (PARTIALLY IMPLEMENTED - needs service layer fixes)
+- [⚠️] T067 [P] CLI --start-conversation in backend/ai_service/src/cli/conversation_commands.py (PARTIALLY IMPLEMENTED - needs service layer fixes)
+- [⚠️] T068 [P] CLI --register-device in backend/streaming_service/src/cli/device_commands.py (PARTIALLY IMPLEMENTED - needs service layer fixes)
+- [⚠️] T069 [P] CLI --test-streaming in backend/streaming_service/src/cli/streaming_commands.py (PARTIALLY IMPLEMENTED - needs service layer fixes)
 
 ### API Endpoints Implementation
-push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.py
+- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.py
 - [✓] T071 POST /auth/refresh endpoint in backend/auth_service/src/api/auth.py
 - [✓] T072 GET /users/me endpoint in backend/auth_service/src/api/users.py
 - [✓] T073 PUT /users/me endpoint in backend/auth_service/src/api/users.py
@@ -151,9 +172,9 @@ push- [✓] T070 POST /auth/login endpoint in backend/auth_service/src/api/auth.
 - [✓] T088 GET /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
 - [✓] T089 PUT /devices/{id} endpoint in backend/streaming_service/src/api/devices.py
 - [✓] Fix duplicate API endpoints - removed /streaming prefix for device management
-- [ ] T090 GET /subscriptions endpoint in backend/auth_service/src/api/subscriptions.py
-- [ ] T091 POST /subscriptions endpoint in backend/auth_service/src/api/subscriptions.py
-- [ ] T092 GET /voice-profiles endpoint in backend/ai_service/src/api/voice_profiles.py
+- [✓] T090 GET /subscriptions endpoint in backend/auth_service/src/api/subscriptions.py
+- [✓] T091 POST /subscriptions endpoint in backend/auth_service/src/api/subscriptions.py
+- [✓] T092 GET /voice-profiles endpoint in backend/ai_service/src/api/voice_profiles.py
 
 ### Frontend Components
 - [ ] T093 [P] User authentication components in frontend/web_app/src/components/auth/
