@@ -27,7 +27,7 @@ async def test_user_data_erasure_flow(auth_client: AsyncClient, db_session: Sess
     # user_in_db = db_session.query(User).get(user_id)
     # assert user_in_db is None
 
-    # Step 3 & 4: Make an API call with the old token
+    # Step 3 & 4: Make an API call with the SAME token (should fail due to blacklist)
     profile_response = await auth_client.get("/users/me", headers=authenticated_user_headers)
     assert profile_response.status_code == 401
 

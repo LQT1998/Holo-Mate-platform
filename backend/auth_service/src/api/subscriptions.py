@@ -94,6 +94,14 @@ async def create_subscription(
     if str(current_user.id) != str(DEV_OWNER_ID):
         raise HTTPException(status_code=403, detail="Forbidden: Access denied")
 
+    # Alias mapping for plan names in DEV
+    alias_map = {
+        "premium_monthly": "pro_monthly",
+        "premium_yearly": "pro_yearly",
+    }
+    if subscription_data.plan_id in alias_map:
+        subscription_data.plan_id = alias_map[subscription_data.plan_id]
+
     # Validation
     if not subscription_data.plan_id.strip():
         raise HTTPException(

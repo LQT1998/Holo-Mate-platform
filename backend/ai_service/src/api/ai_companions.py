@@ -65,72 +65,32 @@ async def list_ai_companions(
     List AI companions for the authenticated user with pagination, search, and filtering.
     """
     if settings.DEV_MODE:
-        if search == "empty_list_test":
-            return AICompanionListResponse(
-                companions=[], total=0, page=page, per_page=per_page, total_pages=0
-            )
-
-        mock_companions = [
-            AICompanionRead(
-                id=uuid.uuid4(),
-                user_id=uuid.UUID(str(DEV_OWNER_ID)),
-                name="Test Companion",
-                description="A helpful AI Companion for testing",
-                personality=None,
-                voice_profile=VoiceProfile(
-                    voice_id="test_voice_1", speed=1.0, pitch=1.0, volume=0.8
-                ),
-                character_asset=CharacterAsset(
-                    model_id="test_asset_1", animations=["idle"], emotions=["happy"]
-                ),
-                preferences=None,
-                status="active",
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc),
-            ),
-            AICompanionRead(
-                id=uuid.uuid4(),
-                user_id=uuid.UUID(str(DEV_OWNER_ID)),
-                name="Another Companion",
-                description="Another test companion",
-                personality=None,
-                voice_profile=VoiceProfile(
-                    voice_id="test_voice_2", speed=1.0, pitch=1.0, volume=0.8
-                ),
-                character_asset=CharacterAsset(
-                    model_id="test_asset_2", animations=["idle"], emotions=["calm"]
-                ),
-                preferences=None,
-                status="inactive",
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc),
-            ),
-        ]
-
-        if search:
-            search_lower = search.lower()
-            mock_companions = [
-                c
-                for c in mock_companions
-                if search_lower in (c.name or "").lower()
-                or search_lower in (c.description or "").lower()
-            ]
-
-        if status_filter:
-            mock_companions = [c for c in mock_companions if c.status == status_filter]
-
-        if sort_by:
-            reverse = sort_order == "desc"
-            mock_companions.sort(key=lambda x: getattr(x, sort_by), reverse=reverse)
-
-        total = len(mock_companions)
+        # Use real service/DB for consistency between create & list in DEV
+        service = CompanionService(db)
+        companions = await service.list_companions(uuid.UUID(str(current_user["id"])) )
+        total = len(companions)
         total_pages = (total + per_page - 1) // per_page
         start_idx = (page - 1) * per_page
         end_idx = start_idx + per_page
-        paginated = mock_companions[start_idx:end_idx]
-
+        paginated = companions[start_idx:end_idx]
+        items = [
+            AICompanionRead(
+                id=c.id,
+                user_id=c.user_id,
+                name=c.name,
+                description=c.description,
+                personality=c.personality,
+                voice_profile=None,
+                character_asset=None,
+                preferences=None,
+                status=c.status,
+                created_at=c.created_at,
+                updated_at=c.updated_at,
+            )
+            for c in paginated
+        ]
         return AICompanionListResponse(
-            companions=paginated,
+            companions=items,
             total=total,
             page=page,
             per_page=per_page,
@@ -178,31 +138,28 @@ async def create_ai_companion(
     db: AsyncSession = Depends(get_db),
 ):
     if settings.DEV_MODE:
-        now = datetime.now(timezone.utc)
-
-        if payload.name == "ExistingCompanion":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Companion name already exists",
-            )
-
-        companion_id = uuid.uuid4()
-        companion = AICompanionRead(
-            id=companion_id,
+        # Use real service/DB to persist companion in DEV
+        service = CompanionService(db)
+        created = await service.create_companion(
             user_id=uuid.UUID(str(current_user["id"])),
             name=payload.name,
             description=payload.description,
-            personality=payload.personality,
-            voice_profile=payload.voice_profile,
-            character_asset=payload.character_asset,
-            preferences=payload.preferences,
-            status=payload.status or "active",
-            created_at=now,
-            updated_at=now,
+            personality=payload.personality.model_dump() if payload.personality else None,
         )
-
-        response.headers["Location"] = f"/ai-companions/{companion_id}"
-        return companion
+        response.headers["Location"] = f"/ai-companions/{created.id}"
+        return AICompanionRead(
+            id=created.id,
+            user_id=created.user_id,
+            name=created.name,
+            description=created.description,
+            personality=created.personality,
+            voice_profile=None,
+            character_asset=None,
+            preferences=None,
+            status=created.status,
+            created_at=created.created_at,
+            updated_at=created.updated_at,
+        )
 
     # Non-DEV path: create in DB
     service = CompanionService(db)
@@ -262,7 +219,7 @@ async def get_ai_companion(
                     voice_id="test_voice_1", speed=1.0, pitch=1.0, volume=0.8
                 ),
                 character_asset=CharacterAsset(
-                    model_id="avatar_v1",
+                    character_id="avatar_v1",
                     animations=["idle", "talking", "listening"],
                     emotions=["happy", "sad", "excited", "calm"],
                 ),
@@ -360,7 +317,7 @@ async def update_ai_companion(
                 character_asset=update_data.get(
                     "character_asset",
                     {
-                        "model_id": "avatar_v1",
+                        "character_id": "avatar_v1",
                         "animations": ["idle", "talking", "listening"],
                         "emotions": ["happy", "sad", "excited", "calm"],
                     },

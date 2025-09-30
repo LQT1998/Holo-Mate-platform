@@ -3,8 +3,8 @@ Pydantic schemas for HologramDevice entity
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List, Union
+from pydantic import BaseModel, Field, field_validator
 import uuid
 
 from shared.src.enums.device_enums import DeviceStatus, DeviceType
@@ -13,9 +13,23 @@ from shared.src.enums.device_enums import DeviceStatus, DeviceType
 class DeviceBase(BaseModel):
     """Base device schema with common fields"""
     name: str = Field(..., min_length=1, max_length=100)
-    device_type: DeviceType
+    device_type: Union[DeviceType, str]  # Allow both enum and string for aliases
     device_model: Optional[str] = Field(None, max_length=100)
     serial_number: Optional[str] = Field(None, min_length=1, max_length=100)
+    
+    @field_validator('device_type', mode='before')
+    @classmethod
+    def validate_device_type(cls, v):
+        """Convert string aliases to DeviceType enum values."""
+        alias_map = {
+            "HOLO_PAD_V1": DeviceType.hologram_fan.value,
+            "HOLOGRAM_FAN": DeviceType.hologram_fan.value,
+        }
+        if isinstance(v, str):
+            return alias_map.get(v, v)
+        if isinstance(v, DeviceType):
+            return v.value
+        return v
 
 
 class DeviceCreate(DeviceBase):

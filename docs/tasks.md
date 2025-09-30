@@ -80,16 +80,16 @@
 - [✓] T036 [P] Contract test GET /voice-profiles in tests/contract/test_voice_profiles_list.py
 
 ### Integration Tests (User Stories)
-- [ ] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py
-- [ ] T038 [P] Integration test AI companion creation in tests/integration/test_companion_creation.py
-- [ ] T039 [P] Integration test voice conversation flow in tests/integration/test_voice_conversation.py
-- [ ] T040 [P] Integration test device pairing in tests/integration/test_device_pairing.py
-- [ ] T041 [P] Integration test subscription management in tests/integration/test_subscription_management.py
-- [ ] T042 [P] Integration test multi-device sync in tests/integration/test_multi_device_sync.py
-- [ ] T043 [P] Integration test GDPR compliance in tests/integration/test_gdpr_compliance.py
-- [ ] T044 [P] Integration test full-duplex streaming in tests/integration/test_full_duplex_streaming.py
-- [ ] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py
-- [ ] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py
+- [⚠️] T037 [P] Integration test user registration flow in tests/integration/test_user_registration.py (FAILING - needs fix)
+- [⚠️] T038 [P] Integration test AI companion creation in tests/integration/test_companion_creation.py (FAILING - needs fix)
+- [⚠️] T039 [P] Integration test voice conversation flow in tests/integration/test_voice_conversation.py (FAILING - needs fix)
+- [⚠️] T040 [P] Integration test device pairing in tests/integration/test_device_pairing.py (FAILING - needs fix)
+- [⚠️] T041 [P] Integration test subscription management in tests/integration/test_subscription_management.py (FAILING - needs fix)
+- [⚠️] T042 [P] Integration test multi-device sync in tests/integration/test_multi_device_sync.py (FAILING - needs fix)
+- [⚠️] T043 [P] Integration test GDPR compliance in tests/integration/test_gdpr_compliance.py (FAILING - needs fix)
+- [✓] T044 [P] Integration test full-duplex streaming in tests/integration/test_full_duplex_streaming.py (CREATED - placeholder)
+- [⚠️] T045 [P] Integration test multi-user conversation in tests/integration/test_multi_user_conversation.py (FAILING - needs fix)
+- [⚠️] T046 [P] Integration test user data erasure flow in tests/integration/test_data_erasure.py (FAILING - needs fix)
 
 ### New Contract tests for Streaming Service
 - [✓] T040b [P] Contract test POST /streaming/sessions in tests/contract/test_streaming_sessions.py
@@ -97,26 +97,26 @@
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
 
 ### Data Models (Entities)
-- [ ] T047 [P] User model in backend/shared/src/models/user.py
-- [ ] T048 [P] AICompanion model in backend/shared/src/models/ai_companion.py
-- [ ] T049 [P] Conversation model in backend/shared/src/models/conversation.py
-- [ ] T050 [P] Message model in backend/shared/src/models/message.py
+- [✓] T047 [P] User model in backend/shared/src/models/user.py
+- [✓] T048 [P] AICompanion model in backend/shared/src/models/ai_companion.py
+- [✓] T049 [P] Conversation model in backend/shared/src/models/conversation.py
+- [✓] T050 [P] Message model in backend/shared/src/models/message.py
 - [✓] T051 [P] HologramDevice model in backend/shared/src/models/hologram_device.py
-- [ ] T052 [P] CharacterAsset model in backend/shared/src/models/character_asset.py
-- [ ] T053 [P] Subscription model in backend/shared/src/models/subscription.py
-- [ ] T054 [P] UserPreference model in backend/shared/src/models/user_preference.py
-- [ ] T055 [P] VoiceProfile model in backend/shared/src/models/voice_profile.py
-- [ ] T056 [P] AnimationSequence model in backend/shared/src/models/animation_sequence.py
+- [✓] T052 [P] CharacterAsset model in backend/shared/src/models/character_asset.py
+- [✓] T053 [P] Subscription model in backend/shared/src/models/subscription.py
+- [✓] T054 [P] UserPreference model in backend/shared/src/models/user_preference.py
+- [✓] T055 [P] VoiceProfile model in backend/shared/src/models/voice_profile.py
+- [✓] T056 [P] AnimationSequence model in backend/shared/src/models/animation_sequence.py
 
 ### Service Layer
-- [ ] T057 [P] UserService CRUD in backend/auth_service/src/services/user_service.py
-- [ ] T058 [P] AICompanionService in backend/ai_service/src/services/ai_companion_service.py
-- [ ] T059 [P] ConversationService in backend/ai_service/src/services/conversation_service.py
-- [ ] T060 [P] MessageService in backend/ai_service/src/services/message_service.py
-- [ ] T061 [P] StreamingService in backend/streaming_service/src/services/streaming_service.py
-- [ ] T062 [P] DeviceService in backend/streaming_service/src/services/device_service.py
-- [ ] T063 [P] SubscriptionService in backend/auth_service/src/services/subscription_service.py
-- [ ] T064 [P] VoiceProfileService in backend/ai_service/src/services/voice_profile_service.py
+- [✓] T057 [P] UserService CRUD in backend/auth_service/src/services/user_service.py
+- [✓] T058 [P] AICompanionService in backend/ai_service/src/services/ai_companion_service.py
+- [✓] T059 [P] ConversationService in backend/ai_service/src/services/conversation_service.py
+- [✓] T060 [P] MessageService in backend/ai_service/src/services/message_service.py
+- [✓] T061 [P] StreamingService in backend/streaming_service/src/services/streaming_service.py
+- [✓] T062 [P] DeviceService in backend/streaming_service/src/services/device_service.py
+- [✓] T063 [P] SubscriptionService in backend/auth_service/src/services/subscription_service.py
+- [✓] T064 [P] VoiceProfileService in backend/ai_service/src/services/voice_profile_service.py
 
 ### CLI Commands
 - [ ] T065 [P] CLI --create-user in backend/auth_service/src/cli/user_commands.py

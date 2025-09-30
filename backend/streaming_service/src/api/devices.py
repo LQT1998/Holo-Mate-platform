@@ -7,9 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 import uuid
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from streaming_service.src.security.deps import get_current_user
 from streaming_service.src.config import settings
+from streaming_service.src.services.device_service import DeviceService
+from shared.src.db.session import get_db
 from shared.src.schemas.device_schema import (
     DeviceCreate,
     DeviceUpdate,
@@ -42,6 +45,7 @@ async def list_devices(
     ),
     sort_order: str = Query("desc", description="Sort order (asc/desc)", pattern="^(asc|desc)$"),
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get a list of devices for the current user"""
     if not settings.DEV_MODE:
@@ -50,30 +54,43 @@ async def list_devices(
     if str(current_user.get("id")) != str(DEV_OWNER_ID):
         raise HTTPException(status_code=403, detail="Forbidden: Access denied")
 
-    now = datetime.now(timezone.utc)
-    devices: List[DeviceResponse] = []
-
-    if status:
-        devices = [d for d in devices if d.status == status]
-    if type:
-        devices = [d for d in devices if d.device_type == type]
-
-    reverse = sort_order.lower() == "desc"
-    if sort_by == "name":
-        devices.sort(key=lambda x: x.name, reverse=reverse)
-    elif sort_by == "status":
-        devices.sort(key=lambda x: x.status, reverse=reverse)
-    elif sort_by == "created_at":
-        devices.sort(key=lambda x: x.created_at, reverse=reverse)
-    elif sort_by == "last_seen_at":
-        devices.sort(key=lambda x: x.last_seen_at or datetime.min, reverse=reverse)
-
-    total = len(devices)
+    # Use DeviceService to get devices from DB
+    service = DeviceService(db)
+    user_id = uuid.UUID(str(current_user.get("id")))
+    
+    # Convert status filter - convert enum to string if needed
+    status_filter = status.value if status else None
+    devices = await service.list_devices(
+        user_id=user_id,
+        status=status_filter,
+        page=page,
+        per_page=per_page
+    )
+    
+    # Convert to DeviceResponse
+    device_responses = []
+    for device in devices:
+        device_responses.append(DeviceResponse(
+            id=str(device.id),
+            user_id=str(device.user_id),
+            name=device.name,
+            device_type=device.device_type,
+            device_model=device.device_model,
+            serial_number=device.serial_number,
+            status=device.status,
+            created_at=device.created_at,
+            updated_at=device.updated_at,
+            last_seen_at=device.last_seen_at,
+            hardware_info=device.hardware_info,
+            settings=device.settings,
+            firmware_version=device.firmware_version
+        ))
+    
+    total = len(device_responses)
     total_pages = (total + per_page - 1) // per_page
-    start, end = (page - 1) * per_page, (page - 1) * per_page + per_page
 
     return DeviceListResponse(
-        devices=devices[start:end], total=total, page=page, per_page=per_page, total_pages=total_pages
+        devices=device_responses, total=total, page=page, per_page=per_page, total_pages=total_pages
     )
 
 
@@ -88,6 +105,7 @@ async def register_device(
     device_data: DeviceCreate,
     response: Response,
     current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Register a new device"""
     if not settings.DEV_MODE:
@@ -95,6 +113,14 @@ async def register_device(
 
     if str(current_user.get("id")) != str(DEV_OWNER_ID):
         raise HTTPException(status_code=403, detail="Forbidden: Access denied")
+
+    # Map legacy/alias device_type in DEV
+    alias_map = {
+        "HOLO_PAD_V1": DeviceType.hologram_fan,
+        "HOLOGRAM_FAN": DeviceType.hologram_fan,
+    }
+    mapped_type = alias_map.get(str(device_data.device_type), device_data.device_type)
+    device_data.device_type = mapped_type
 
     if device_data.hardware_info:
         rh = device_data.hardware_info
@@ -115,25 +141,44 @@ async def register_device(
     if device_data.name == "invalid_device_name":
         raise HTTPException(status_code=422, detail="Invalid device name")
 
-    now, new_id = datetime.now(timezone.utc), uuid.uuid4()
-    device = DeviceResponse(
-        id=str(new_id),
-        user_id=str(DEV_OWNER_ID),
+    # Use DeviceService to register device
+    service = DeviceService(db)
+    user_id = uuid.UUID(str(current_user.get("id")))
+    
+    # Register device using service - device_type is already normalized by schema
+    device = await service.register_device(
+        user_id=user_id,
+        serial=serial,
         name=device_data.name,
-        device_type=device_data.device_type,
+        device_type=(
+            device_data.device_type.value 
+            if isinstance(device_data.device_type, DeviceType) 
+            else str(device_data.device_type)
+        ),
         device_model=device_data.device_model,
-        serial_number=serial,
-        status=DeviceStatus.offline,
-        last_seen_at=now,
         firmware_version=device_data.firmware_version,
-        hardware_info=device_data.hardware_info,
-        settings=None,
-        created_at=now,
-        updated_at=now,
+        hardware_info=device_data.hardware_info
+    )
+    
+    # Convert to DeviceResponse
+    device_response = DeviceResponse(
+        id=str(device.id),
+        user_id=str(device.user_id),
+        name=device.name,
+        device_type=device.device_type,
+        device_model=device.device_model,
+        serial_number=device.serial_number,
+        status=device.status,
+        created_at=device.created_at,
+        updated_at=device.updated_at,
+        last_seen_at=device.last_seen_at,
+        hardware_info=device.hardware_info,
+        settings=device.settings,
+        firmware_version=device.firmware_version
     )
 
-    response.headers["Location"] = f"/devices/{new_id}"
-    return device
+    response.headers["Location"] = f"/devices/{device.id}"
+    return device_response
 
 
 @router.get(

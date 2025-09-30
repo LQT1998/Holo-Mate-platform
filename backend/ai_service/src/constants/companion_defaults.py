@@ -2,9 +2,9 @@
 
 # Default CharacterAsset values
 DEFAULT_CHARACTER_ASSET = {
-    "model_id": "default_avatar_v1",
-    "animations": ["idle", "talking", "listening"],
-    "emotions": ["neutral", "happy", "sad", "excited"],
+    "character_id": "default_avatar_v1",
+    "animations_data": ["idle", "talking", "listening"],
+    "emotions_data": ["neutral", "happy", "sad", "excited"],
 }
 
 # Default VoiceProfile values

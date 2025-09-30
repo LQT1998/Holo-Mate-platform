@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from shared.src.security.jwt import JWTErrorResponse, verify_access_token
+from shared.src.security.token_blacklist import dev_blacklisted
+from shared.src.config import settings
 
 
 class JWTAuthMiddleware(BaseHTTPMiddleware):
@@ -41,6 +43,15 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             )
 
         token = auth_header.split(" ", maxsplit=1)[1].strip()
+        
+        # Check DEV blacklist first
+        if settings.ENV == "dev" and dev_blacklisted(token):
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"detail": "Token revoked"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
         try:
             payload = verify_access_token(token)
             request.state.user = payload

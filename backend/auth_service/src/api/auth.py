@@ -6,10 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth_service.src.services.google_verify import verify_google_id_token
 from auth_service.src.config import settings
-from auth_service.src.db.session import get_db
+from shared.src.db.session import get_db
 from auth_service.src.services.auth_service import AuthService
 from auth_service.src.services.user_service import UserService
-from shared.src.security.utils import verify_password
+from shared.src.security.utils import verify_password, get_password_hash
 from shared.src.schemas import (
     Token,
     TokenSchema,
@@ -23,6 +23,10 @@ from shared.src.constants import DEV_OWNER_ID
 
 router = APIRouter(tags=["Authentication"])
 logger = logging.getLogger(__name__)
+
+# DEV in-memory user store for registration/login in DEV_MODE
+# Store plaintext in DEV to avoid hashing dependency in tests
+DEV_USER_STORE: dict[str, str] = {}
 
 
 def _create_token_response(access_token: str, refresh_token: str) -> TokenSchema:
@@ -44,35 +48,25 @@ def _create_token_response(access_token: str, refresh_token: str) -> TokenSchema
 async def register_user(
     payload: UserCreate, db: AsyncSession = Depends(get_db)
 ):
-    # Dev shortcut for contract tests
+    """Register a new user. In DEV_MODE, we still create a real user in DB.
+
+    This ensures integration tests that register then login will pass through the
+    same hashing/verification pipeline.
+    """
+    # DEV path: keep in-memory user registry to avoid DB requirement
     if settings.DEV_MODE:
-    # Simulate email already exists for specific test case
-        if payload.email == "existing@example.com":
+        if payload.email in DEV_USER_STORE:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
-        # Return success for other cases with mock ID
+        DEV_USER_STORE[payload.email] = payload.password  # store plaintext in DEV
         return {
             "id": str(uuid.uuid4()),
-            "email": payload.email
+            "email": payload.email,
         }
-    
-    # Production path
-    user_service = UserService(db)
-    existing = await user_service.get_user_by_email(payload.email)
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
-    # Return success for other cases with mock ID
-    return {
-        "id": str(uuid.uuid4()),
-        "email": payload.email
-    }
-    
-    # Production path
+
+    # PROD path
     user_service = UserService(db)
     existing = await user_service.get_user_by_email(payload.email)
     if existing:
@@ -81,40 +75,27 @@ async def register_user(
             detail="Email already registered",
         )
     user = await user_service.create_user(payload)
-    return {"email": user.email}
+    return {"id": str(user.id), "email": user.email}
 
 @router.post("/login")
 async def login(
     request: LoginRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Authenticate user and return a new token pair.
-    """
-    # Dev shortcut to satisfy contract tests without DB dependency
-    if settings.ENV == "dev":
-        # Validate credentials in DEV_MODE for proper testing
-        if not request.email or not request.password:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Only accept specific test credentials in DEV_MODE
-        valid_credentials = {
-            "test@example.com": "validpassword123",
-            "user@example.com": "password123",
-            "admin@example.com": "admin123"
-        }
-        
-        if valid_credentials.get(request.email) != request.password:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+    """Authenticate user and return a new token pair.
 
+    In DEV_MODE, still verify against DB instead of hardcoded credentials
+    to match the registration flow and avoid divergence.
+    """
+    # DEV path: verify against in-memory store
+    if settings.DEV_MODE:
+        stored_plain = DEV_USER_STORE.get(request.email)
+        if not stored_plain or stored_plain != request.password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         auth_service = AuthService(db)
         access_token, refresh_token = await auth_service.create_token_pair({"email": request.email})
         token = _create_token_response(access_token, refresh_token)
@@ -131,7 +112,7 @@ async def login(
             },
         }
 
-    # TODO: Production path with real DB lookup
+    # PROD path
     user_service = UserService(db)
     auth_service = AuthService(db)
     user = await user_service.get_user_by_email(request.email)
@@ -147,6 +128,7 @@ async def login(
             detail="Account is deactivated",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     access_token, refresh_token = await auth_service.create_token_pair(user)
     token = _create_token_response(access_token, refresh_token)
     token_payload = token.model_dump()

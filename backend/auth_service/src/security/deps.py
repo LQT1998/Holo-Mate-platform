@@ -12,6 +12,7 @@ from auth_service.src.db.session import get_db
 from auth_service.src.services.user_service import UserService
 from shared.src.models.user import User
 from shared.src.security.security import verify_access_token
+from shared.src.security.token_blacklist import dev_blacklisted
 from shared.src.constants import DEV_OWNER_ID
 from auth_service.src.config import settings
 
@@ -42,6 +43,14 @@ async def get_current_user(
 
         # --- Dev shortcut ---
         if settings.DEV_MODE:
+            # Check blacklist first
+            if dev_blacklisted(token):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token revoked",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
             # Accept hardcoded tokens for testing
             if token in ["test_token", "valid_access_token_here"]:
                 class MockUser:

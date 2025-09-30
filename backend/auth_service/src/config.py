@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Optional
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 from shared.src.config import DatabaseUrl, RedisUrl
@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    OPENAI_API_KEY: str | None = None
-    ELEVENLABS_API_KEY: str | None = None
-    STRIPE_SECRET_KEY: str | None = None
+    OPENAI_API_KEY: Optional[str] = None
+    ELEVENLABS_API_KEY: Optional[str] = None
+    STRIPE_SECRET_KEY: Optional[str] = None
 
     # New: flag to check if running in dev mode
     @computed_field

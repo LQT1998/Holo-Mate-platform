@@ -23,10 +23,10 @@ class VoiceProfile(BaseModel):
 
 
 class CharacterAsset(BaseModel):
-    model_id: Optional[str] = Field(default=None, min_length=1)
+    character_id: Optional[str] = Field(default=None, min_length=1)
     animations: Optional[List[str]] = None
     emotions: Optional[List[Literal["happy", "sad", "excited", "calm", "angry", "neutral"]]] = None
-    # Avoid pydantic protected namespace warning for field name 'model_id'
+    # Avoid pydantic protected namespace warning for field name 'character_id'
     model_config = {
         "protected_namespaces": ()
     }

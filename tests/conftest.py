@@ -9,6 +9,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+# Skip blacklist clearing for now - use different tokens instead
+dev_blacklist_clear = None
+
 # Add project root to Python path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
@@ -112,3 +115,6 @@ def another_authenticated_user_headers():
         "Authorization": "Bearer another_valid_access_token_here",
         "Content-Type": "application/json"
     }
+
+
+# Removed blacklist clearing fixture - using different tokens instead

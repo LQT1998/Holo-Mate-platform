@@ -43,7 +43,7 @@ MOCK_VOICE_PROFILE = {
 
 # Mock Character Asset
 MOCK_CHARACTER_ASSET = {
-    "model_id": "avatar_v1",
+    "character_id": "avatar_v1",
     "animations": ["idle", "talking", "listening"],
     "emotions": ["happy", "sad", "excited", "calm"],
 }
@@ -59,8 +59,8 @@ MOCK_PREFERENCES = {
 MOCK_AI_COMPANION = {
     "id": DEV_KNOWN_COMPANION_ID,
     "user_id": str(DEV_OWNER_ID),
-    "name": "Test Assistant",
-    "description": "A helpful AI assistant for testing",
+    "name": "Test Companion",
+    "description": "A helpful AI Companion for testing",
     "personality": MOCK_PERSONALITY,
     "voice_profile": MOCK_VOICE_PROFILE,
     "character_asset": MOCK_CHARACTER_ASSET,
@@ -85,8 +85,8 @@ MOCK_USER_DATA = {
 
 # Valid update data for PUT tests
 VALID_UPDATE_DATA = {
-    "name": "Updated Assistant",
-    "description": "An updated AI assistant for testing",
+    "name": "Updated Companion",
+    "description": "An updated AI Companion for testing",
     "personality": {
         "traits": ["friendly", "helpful", "professional"],
         "communication_style": "formal",
@@ -121,7 +121,7 @@ INVALID_UPDATE_DATA = {
 
 # Restricted field data (should be rejected)
 RESTRICTED_FIELD_DATA = {
-    "name": "Updated Assistant",
+    "name": "Updated Companion",
     "description": "Updated description",
     "id": "new-id-123",  # Should be rejected
     "user_id": "new-user-id",  # Should be rejected
@@ -131,14 +131,14 @@ RESTRICTED_FIELD_DATA = {
 
 # Partial update data (only some fields)
 PARTIAL_UPDATE_DATA = {
-    "name": "Partially Updated Assistant",
+    "name": "Partially Updated Companion",
     "status": "inactive"
 }
 
 # Valid create data for POST tests
 VALID_CREATE_DATA = {
-    "name": "New AI Assistant",
-    "description": "A brand new AI assistant for testing",
+    "name": "New AI Companion",
+    "description": "A brand new AI Companion for testing",
     "personality": MOCK_PERSONALITY,
     "voice_profile": MOCK_VOICE_PROFILE,
     "character_asset": MOCK_CHARACTER_ASSET,

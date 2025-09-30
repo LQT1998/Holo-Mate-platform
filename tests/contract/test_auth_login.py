@@ -42,12 +42,22 @@ class TestAuthLoginContract:
     
     @pytest.mark.asyncio
     async def test_login_success_returns_200_and_tokens(
-        self, 
-        base_url: str, 
+        self,
+        base_url: str,
         valid_login_data: Dict[str, str]
     ):
         """Test successful login returns 200 with access and refresh tokens"""
         async with httpx.AsyncClient() as client:
+            # First register the user (or skip if already exists)
+            register_response = await client.post(
+                f"{base_url}/auth/register",
+                json=valid_login_data,
+                headers={"Content-Type": "application/json"}
+            )
+            # Accept both 201 (created) and 400 (already exists)
+            assert register_response.status_code in [201, 400]
+            
+            # Then try to login
             response = await client.post(
                 f"{base_url}/auth/login",
                 json=valid_login_data,

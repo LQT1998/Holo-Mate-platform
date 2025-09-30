@@ -10,8 +10,11 @@ class CharacterAsset(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     ai_companion_id = Column(GUID(), ForeignKey("ai_companions.id"), nullable=False, index=True)
-    model_url = Column(String, nullable=False)
+    character_id = Column(String, nullable=False)
+    model_url = Column(String, nullable=True)
     asset_type = Column(String, default="3d_model", nullable=False)
+    animations_data = Column(JSON, nullable=True)
+    emotions_data = Column(JSON, nullable=True)
     
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)

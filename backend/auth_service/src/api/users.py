@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth_service.src.db.session import get_db
@@ -7,6 +7,7 @@ from auth_service.src.services.user_service import UserService
 from shared.src.models.user import User
 from shared.src.schemas.user import UserRead, UserUpdate
 from shared.src.constants import DEV_OWNER_ID
+from shared.src.security.token_blacklist import dev_blacklist_add
 from auth_service.src.config import settings
 
 router = APIRouter(tags=["Users"])
@@ -102,3 +103,36 @@ async def update_me(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return updated_user
+
+
+@router.post("/me/delete", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """GDPR: Request account deletion (DEV minimal)."""
+    if settings.DEV_MODE:
+        # 1) Vô hiệu hóa token hiện tại
+        authz = request.headers.get("Authorization", "")
+        tok = authz.split(" ", 1)[1] if " " in authz else authz
+        if tok:
+            dev_blacklist_add(tok)
+        # 2) Tùy chọn: "deactivate" user để mọi service tra DB cũng fail (an toàn hơn)
+        # user_service = UserService(db)
+        # await user_service.deactivate_user(user["id"])
+        # await db.commit()
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    
+    # TODO: production path: cascade delete + revoke refresh/access
+    raise HTTPException(status_code=501, detail="Not implemented")
+
+
+@router.post("/me/export", status_code=status.HTTP_202_ACCEPTED)
+async def export_my_data(
+    current_user: User = Depends(get_current_user),
+):
+    """GDPR: Request data export (DEV minimal)."""
+    if settings.DEV_MODE:
+        return {"status": "accepted", "export_id": "dev-export-001"}
+    raise HTTPException(status_code=501, detail="Not implemented")

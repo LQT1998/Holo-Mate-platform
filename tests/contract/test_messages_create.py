@@ -41,12 +41,13 @@ class TestMessageCreate:
         self,
         base_url: str,
         valid_access_token: str,
+        valid_conversation_id: str,
         valid_message_data: dict
     ):
         """Test creating a message successfully returns 201 Created"""
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=valid_message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -91,7 +92,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -120,7 +121,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -136,12 +137,13 @@ class TestMessageCreate:
     async def test_create_message_missing_authorization_returns_401(
         self,
         base_url: str,
+        valid_conversation_id: str,
         valid_message_data: dict
     ):
         """Test creating a message without authorization returns 401"""
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=valid_message_data,
                 headers={"Content-Type": "application/json"}
             )
@@ -152,12 +154,13 @@ class TestMessageCreate:
     async def test_create_message_invalid_token_returns_401(
         self,
         base_url: str,
+        valid_conversation_id: str,
         valid_message_data: dict
     ):
         """Test creating a message with invalid token returns 401"""
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=valid_message_data,
                 headers={
                     "Authorization": "Bearer invalid_token",
@@ -171,7 +174,8 @@ class TestMessageCreate:
     async def test_create_message_invalid_conversation_id_format_returns_422(
         self,
         base_url: str,
-        valid_access_token: str
+        valid_access_token: str,
+        valid_conversation_id: str
     ):
         """Test creating a message with invalid conversation ID format returns 422"""
         message_data = {
@@ -183,7 +187,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/invalid_conversation_id/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -197,7 +201,8 @@ class TestMessageCreate:
     async def test_create_message_nonexistent_conversation_returns_404(
         self,
         base_url: str,
-        valid_access_token: str
+        valid_access_token: str,
+        valid_conversation_id: str
     ):
         """Test creating a message for nonexistent conversation returns 404"""
         message_data = {
@@ -209,7 +214,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/nonexistent_conversation_456/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -223,7 +228,8 @@ class TestMessageCreate:
     async def test_create_message_forbidden_conversation_returns_403(
         self,
         base_url: str,
-        valid_access_token: str
+        valid_access_token: str,
+        valid_conversation_id: str
     ):
         """Test creating a message for forbidden conversation returns 403"""
         message_data = {
@@ -235,7 +241,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/forbidden_999/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -262,7 +268,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -289,7 +295,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -316,7 +322,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -330,7 +336,8 @@ class TestMessageCreate:
     async def test_create_message_missing_required_fields_returns_422(
         self,
         base_url: str,
-        valid_access_token: str
+        valid_access_token: str,
+        valid_conversation_id: str
     ):
         """Test creating a message with missing required fields returns 422"""
         message_data = {
@@ -340,7 +347,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
@@ -367,7 +374,7 @@ class TestMessageCreate:
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{base_url}/messages",
+                f"{base_url}/conversations/{valid_conversation_id}/messages",
                 json=message_data,
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",

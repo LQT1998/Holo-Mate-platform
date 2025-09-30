@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from shared.src.models.hologram_device import HologramDevice
-from shared.src.enums.device_enums import DeviceStatus
+from shared.src.enums.device_enums import DeviceStatus, DeviceType
 
 
 class DeviceService:
@@ -58,10 +58,16 @@ class DeviceService:
         
         # Create new device, rely on DB constraint for duplicate serial
         now = datetime.now(timezone.utc)
+        # Convert string device_type to enum
+        if isinstance(device_type, str):
+            device_type_enum = DeviceType(device_type)
+        else:
+            device_type_enum = device_type
+            
         device = HologramDevice(
             user_id=user_id,
             name=name or f"Device {serial}",
-            device_type=device_type,
+            device_type=device_type_enum,
             status=DeviceStatus.unpaired,
             serial_number=serial,
             device_model=device_model,

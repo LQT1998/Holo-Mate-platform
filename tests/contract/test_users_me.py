@@ -54,10 +54,28 @@ class TestGetUsersMe:
     ):
         """Test successful user profile retrieval returns 200 with user data"""
         async with httpx.AsyncClient() as client:
+            # First register and login to get a fresh token
+            register_response = await client.post(
+                f"{auth_base_url}/auth/register",
+                json={"email": "test@example.com", "password": "validpassword123"},
+                headers={"Content-Type": "application/json"}
+            )
+            # Accept both 201 (created) and 400 (already exists)
+            assert register_response.status_code in [201, 400]
+            
+            login_response = await client.post(
+                f"{auth_base_url}/auth/login",
+                json={"email": "test@example.com", "password": "validpassword123"},
+                headers={"Content-Type": "application/json"}
+            )
+            assert login_response.status_code == 200
+            login_data = login_response.json()
+            fresh_token = login_data["access_token"]
+            
             response = await client.get(
                 f"{auth_base_url}/users/me",
                 headers={
-                    "Authorization": f"Bearer {valid_access_token}",
+                    "Authorization": f"Bearer {fresh_token}",
                     "Content-Type": "application/json"
                 }
             )

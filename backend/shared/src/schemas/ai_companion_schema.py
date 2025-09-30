@@ -29,7 +29,7 @@ class VoiceProfile(BaseModel):
 
 
 class CharacterAsset(BaseModel):
-    model_id: str
+    character_id: str
     animations: List[str]
     emotions: List[str]
 
