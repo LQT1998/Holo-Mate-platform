@@ -57,7 +57,7 @@ class DeviceService:
             raise HTTPException(status_code=422, detail="Serial number is required")
         
         # Create new device, rely on DB constraint for duplicate serial
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         # Convert string device_type to enum
         if isinstance(device_type, str):
             device_type_enum = DeviceType(device_type)
@@ -249,7 +249,7 @@ class DeviceService:
         Raises:
             HTTPException(404): If device not found
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         stmt = (
             update(HologramDevice)
             .where(HologramDevice.id == device_id)
@@ -314,7 +314,7 @@ class DeviceService:
         """
         from datetime import timedelta
         
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         threshold_time = now - timedelta(hours=hours_threshold)
         stmt = (
             update(HologramDevice)

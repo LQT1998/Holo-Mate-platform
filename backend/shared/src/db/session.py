@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from shared.src.config import settings
+from ..config import settings
 
 DATABASE_URL = str(settings.DATABASE_URL)
 

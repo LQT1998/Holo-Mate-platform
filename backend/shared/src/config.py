@@ -3,9 +3,13 @@
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import Field, GetCoreSchemaHandler
+from pydantic import Field, GetCoreSchemaHandler, ConfigDict
 from pydantic_core import CoreSchema, core_schema
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class DatabaseUrl(str):
@@ -91,18 +95,28 @@ class RedisUrl(str):
 
 
 class SharedSettings(BaseSettings):
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
+    
     ENV: str = "dev"
-    DATABASE_URL: Annotated[DatabaseUrl, Field(..., env="DATABASE_URL")]
-    DB_ECHO: bool = Field(default=False, env="DB_ECHO")
-    REDIS_URL: Annotated[RedisUrl, Field(..., env="REDIS_URL")]
-    JWT_SECRET: str = Field(..., env="JWT_SECRET")
-    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"
+    DATABASE_URL: Annotated[DatabaseUrl, Field(...)]
+    DB_ECHO: bool = Field(default=False)
+    REDIS_URL: Annotated[RedisUrl, Field(...)]
+    JWT_SECRET_KEY: str = Field(...)
+    JWT_ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRES_MINUTES: int = Field(default=30)
+    
+    # Alias for backward compatibility
+    @property
+    def JWT_SECRET(self) -> str:
+        return self.JWT_SECRET_KEY
+    
+    @property
+    def ACCESS_TOKEN_EXPIRE_MINUTES(self) -> int:
+        return self.ACCESS_TOKEN_EXPIRES_MINUTES
 
 
 @lru_cache

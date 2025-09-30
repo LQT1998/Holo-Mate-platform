@@ -56,7 +56,7 @@ class TestDevicesRegisterContract:
         """Invalid device registration request data"""
         return {
             "name": "",  # Empty name
-            "device_type": "invalid_type",  # Invalid type
+            "device_type": "invalid_device_type",  # Invalid type
             "serial_number": "x" * 256,  # Serial number too long
             "hardware_info": "invalid_json"  # Should be object
         }
@@ -352,7 +352,7 @@ class TestDevicesRegisterContract:
             # Name too long
             {"name": "x" * 256, "device_type": "hologram_fan"},
             # Invalid device type
-            {"name": "My Device", "device_type": "invalid_type"},
+            {"name": "My Device", "device_type": "invalid_device_type"},
             # Serial number too long
             {"name": "My Device", "device_type": "hologram_fan", "serial_number": "x" * 256},
             # Invalid hardware info values

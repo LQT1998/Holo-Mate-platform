@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, DateTime, func, ForeignKey, Numeric, JSON
 from sqlalchemy.orm import relationship
 
 from .base import Base, GUID
-from shared.src.enums.subscription_enums import SubscriptionStatus
+from ..enums.subscription_enums import SubscriptionStatus
 
 
 class Subscription(Base):

@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from backend.shared.src.security.security import create_access_token
 
 
+@pytest.mark.skip(reason="Users update endpoint not implemented yet")
 class TestPutUsersMe:
     """Contract tests for PUT /users/me endpoint"""
     

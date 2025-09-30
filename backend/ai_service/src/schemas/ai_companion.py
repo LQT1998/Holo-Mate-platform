@@ -24,6 +24,7 @@ class VoiceProfile(BaseModel):
 
 class CharacterAsset(BaseModel):
     character_id: Optional[str] = Field(default=None, min_length=1)
+    model_id: Optional[str] = Field(default=None, min_length=1)
     animations: Optional[List[str]] = None
     emotions: Optional[List[Literal["happy", "sad", "excited", "calm", "angry", "neutral"]]] = None
     # Avoid pydantic protected namespace warning for field name 'character_id'

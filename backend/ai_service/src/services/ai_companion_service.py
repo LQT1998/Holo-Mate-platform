@@ -71,30 +71,42 @@ class CompanionService:
         
         Uses atomic transaction to ensure all-or-nothing creation.
         """
-        async with self.db.begin():
-            # Create companion
-            companion = AICompanion(
-                user_id=user_id,
-                name=name,
-                description=description,
-                personality=personality,
+        # Check for duplicate name
+        existing = await self.db.execute(
+            select(AICompanion).where(
+                AICompanion.user_id == user_id,
+                AICompanion.name == name
             )
-            self.db.add(companion)
-            await self.db.flush()
+        )
+        if existing.first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="AI Companion with this name already exists"
+            )
+        
+        # Create companion
+        companion = AICompanion(
+            user_id=user_id,
+            name=name,
+            description=description,
+            personality=personality,
+        )
+        self.db.add(companion)
+        await self.db.flush()
 
-            # Create default CharacterAsset
-            character_asset = CharacterAsset(
-                ai_companion_id=companion.id,
-                **DEFAULT_CHARACTER_ASSET,
-            )
-            self.db.add(character_asset)
+        # Create default CharacterAsset
+        character_asset = CharacterAsset(
+            ai_companion_id=companion.id,
+            **DEFAULT_CHARACTER_ASSET,
+        )
+        self.db.add(character_asset)
 
-            # Create default VoiceProfile
-            voice_profile = VoiceProfile(
-                ai_companion_id=companion.id,
-                **DEFAULT_VOICE_PROFILE,
-            )
-            self.db.add(voice_profile)
+        # Create default VoiceProfile
+        voice_profile = VoiceProfile(
+            ai_companion_id=companion.id,
+            **DEFAULT_VOICE_PROFILE,
+        )
+        self.db.add(voice_profile)
 
         await self.db.refresh(companion)
         return companion

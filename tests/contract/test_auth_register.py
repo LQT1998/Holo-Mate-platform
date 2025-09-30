@@ -21,7 +21,7 @@ import pytest
 @pytest.fixture
 def base_url() -> str:
     # Convention: auth service at localhost:8001
-    return "http://localhost:8001"
+    return "http://localhost:8001/api/v1"
 
 
 @pytest.mark.asyncio

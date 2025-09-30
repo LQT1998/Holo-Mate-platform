@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 
 
 # === User Constants ===
-DEV_OWNER_ID = uuid.UUID("00000000-0000-0000-0000-000000000000")
+DEV_OWNER_ID = uuid.UUID("12345678-1234-1234-1234-123456789012")
 DEV_OWNER_EMAIL = "test@example.com"
 DEV_VALID_TOKEN = "valid_access_token_here"
 DEV_INVALID_TOKEN = "invalid_access_token_here"

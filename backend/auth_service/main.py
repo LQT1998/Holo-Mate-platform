@@ -49,7 +49,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth.router, prefix="/auth")
     app.include_router(users.router, prefix="/users")
-    app.include_router(subscriptions.router)
+    app.include_router(subscriptions.router, prefix="/api/v1")
 
     @app.get("/auth/profile")
     async def protected_check(request: Request):  # pragma: no cover - simple helper route
