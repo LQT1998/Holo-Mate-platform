@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 class TestMessageDelete:
     @pytest.fixture
     def base_url(self) -> str:
-        return "http://localhost:8002"
+        return "http://localhost:8002/api/v1"
 
     @pytest.fixture
     def valid_access_token(self) -> str:

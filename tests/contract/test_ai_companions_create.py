@@ -14,7 +14,7 @@ class TestAICompanionsCreateContract:
     @pytest.fixture
     def base_url(self) -> str:
         """Base URL for AI service"""
-        return "http://localhost:8002"
+        return "http://localhost:8002/api/v1"
     
     @pytest.fixture
     def valid_access_token(self) -> str:

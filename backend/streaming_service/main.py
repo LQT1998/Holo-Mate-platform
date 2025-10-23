@@ -51,8 +51,8 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "healthy", "service": "streaming_service"}
 
-    app.include_router(streaming.router, prefix="/streaming")
-    app.include_router(devices.router)
+    app.include_router(streaming.router, prefix="/api/v1/streaming")
+    app.include_router(devices.router, prefix="/api/v1")
 
     return app
 

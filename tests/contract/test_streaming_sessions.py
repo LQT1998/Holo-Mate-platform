@@ -21,9 +21,7 @@ def valid_access_token_here() -> str:
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Streaming sessions endpoint not implemented yet")
 class TestStreamingSessionCreate:
-    @pytest.mark.skip(reason="Streaming sessions endpoint not implemented yet")
     async def test_create_session_success_returns_201(
         self, base_url: str, valid_access_token_here: str
     ):

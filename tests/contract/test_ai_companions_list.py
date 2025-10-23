@@ -14,7 +14,7 @@ class TestAICompanionsListContract:
     @pytest.fixture
     def base_url(self) -> str:
         """Base URL for AI service"""
-        return "http://localhost:8002"
+        return "http://localhost:8002/api/v1"
     
     @pytest.fixture
     def valid_access_token(self) -> str:
@@ -105,7 +105,7 @@ class TestAICompanionsListContract:
         """Test AI companions list with search parameter"""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{base_url}/ai-companions?search=assistant",
+                f"{base_url}/ai-companions?search=companion",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"

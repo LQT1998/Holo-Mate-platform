@@ -180,4 +180,4 @@ def create_expired_token() -> str:
 
 # === Base URLs ===
 AUTH_SERVICE_URL = "http://localhost:8001"
-AI_SERVICE_URL = "http://localhost:8002"
+AI_SERVICE_URL = "http://localhost:8002/api/v1"

@@ -13,7 +13,6 @@ from datetime import datetime, timedelta, timezone
 from backend.shared.src.security.security import create_access_token
 
 
-@pytest.mark.skip(reason="AI companion update endpoint not implemented yet")
 class TestPutAICompanionsUpdate:
     """Contract tests for PUT /ai-companions/{id} endpoint"""
     

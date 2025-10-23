@@ -8,8 +8,8 @@ import sys
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
-from shared.src.db.session import create_engine
-from shared.src.models import Base
+from backend.shared.src.db.session import create_engine
+from backend.shared.src.models import Base
 
 async def create_tables():
     """Create all database tables."""

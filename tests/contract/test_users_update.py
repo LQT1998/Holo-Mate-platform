@@ -12,14 +12,13 @@ from datetime import datetime, timedelta, timezone
 from backend.shared.src.security.security import create_access_token
 
 
-@pytest.mark.skip(reason="Users update endpoint not implemented yet")
 class TestPutUsersMe:
     """Contract tests for PUT /users/me endpoint"""
     
     @pytest.fixture
     def base_url(self) -> str:
         """Base URL for auth service"""
-        return "http://localhost:8001"
+        return "http://localhost:8001/api/v1"
     
     @pytest.fixture
     def valid_access_token(self) -> str:

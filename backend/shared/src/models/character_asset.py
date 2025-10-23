@@ -11,7 +11,6 @@ class CharacterAsset(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     ai_companion_id = Column(GUID(), ForeignKey("ai_companions.id"), nullable=False, index=True)
     character_id = Column(String, nullable=False)
-    model_id = Column(String, nullable=True)
     model_url = Column(String, nullable=True)
     asset_type = Column(String, default="3d_model", nullable=False)
     animations_data = Column(JSON, nullable=True)

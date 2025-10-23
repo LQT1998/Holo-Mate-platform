@@ -15,7 +15,7 @@ class TestAICompanionsGetContract:
     @pytest.fixture
     def base_url(self) -> str:
         """Base URL for AI service"""
-        return "http://localhost:8002"
+        return "http://localhost:8002/api/v1"
     
     @pytest.fixture
     def valid_access_token(self) -> str:
@@ -97,7 +97,7 @@ class TestAICompanionsGetContract:
             # Should contain character asset data
             assert "character_asset" in data
             assert isinstance(data["character_asset"], dict)
-            assert "model_id" in data["character_asset"]
+            assert "character_id" in data["character_asset"]
             assert "animations" in data["character_asset"]
             assert "emotions" in data["character_asset"]
             
@@ -312,7 +312,7 @@ class TestAICompanionsGetContract:
                     assert field in data["voice_profile"], f"Missing voice field: {field}"
                 
                 # Character asset should have required fields
-                asset_fields = ["model_id", "animations", "emotions"]
+                asset_fields = ["character_id", "animations", "emotions"]
                 for field in asset_fields:
                     assert field in data["character_asset"], f"Missing asset field: {field}"
                 

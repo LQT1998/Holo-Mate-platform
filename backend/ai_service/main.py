@@ -58,10 +58,10 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "healthy", "service": "ai_service"}
 
-    app.include_router(ai_companions.router)
-    app.include_router(conversations.router)
-    app.include_router(messages.router)
-    app.include_router(voice_profiles.router)
+    app.include_router(ai_companions.router, prefix="/api/v1")
+    app.include_router(conversations.router, prefix="/api/v1")
+    app.include_router(messages.router, prefix="/api/v1")
+    app.include_router(voice_profiles.router, prefix="/api/v1")
 
     return app
 

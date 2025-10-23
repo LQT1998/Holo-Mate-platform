@@ -14,7 +14,7 @@ class TestDevicesRegisterContract:
     @pytest.fixture
     def base_url(self) -> str:
         """Base URL for streaming service"""
-        return "http://localhost:8003"
+        return "http://localhost:8003/api/v1"
     
     @pytest.fixture
     def valid_access_token(self) -> str:

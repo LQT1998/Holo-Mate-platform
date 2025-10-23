@@ -8,7 +8,6 @@ import httpx
 from typing import Dict, Any, List
 
 
-@pytest.mark.skip(reason="Subscription endpoints need proper implementation")
 class TestSubscriptionsGetContract:
     """Contract tests for GET /subscriptions endpoint"""
     
