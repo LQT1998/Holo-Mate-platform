@@ -233,8 +233,8 @@ async def get_device(
     description="Update device information and settings",
 )
 async def update_device(
+    device_update: DeviceUpdate,
     device_id: str = Path(..., description="Device ID"),
-    device_update: DeviceUpdate = ...,
     current_user: dict = Depends(get_current_user),
 ):
     """Update device information"""

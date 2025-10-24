@@ -56,7 +56,7 @@ class TestGetUsersMe:
         async with httpx.AsyncClient() as client:
             # First register and login to get a fresh token
             register_response = await client.post(
-                f"{auth_base_url}/auth/register",
+                f"http://localhost:8001/auth/register",
                 json={"email": "test@example.com", "password": "validpassword123"},
                 headers={"Content-Type": "application/json"}
             )
@@ -64,7 +64,7 @@ class TestGetUsersMe:
             assert register_response.status_code in [201, 400]
             
             login_response = await client.post(
-                f"{auth_base_url}/auth/login",
+                f"http://localhost:8001/auth/login",
                 json={"email": "test@example.com", "password": "validpassword123"},
                 headers={"Content-Type": "application/json"}
             )
@@ -73,7 +73,7 @@ class TestGetUsersMe:
             fresh_token = login_data["access_token"]
             
             response = await client.get(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {fresh_token}",
                     "Content-Type": "application/json"

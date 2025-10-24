@@ -28,7 +28,7 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 @pytest.fixture
 def auth_base_url() -> str:
     """Base URL for auth service."""
-    return "http://localhost:8001"
+    return "http://localhost:8001/api/v1"
 
 
 @pytest.fixture
