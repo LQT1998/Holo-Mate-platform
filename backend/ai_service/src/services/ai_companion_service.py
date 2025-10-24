@@ -109,6 +109,7 @@ class CompanionService:
         self.db.add(voice_profile)
 
         await self.db.refresh(companion)
+        await self.db.commit()
         return companion
 
     async def update_companion(

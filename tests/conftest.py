@@ -34,13 +34,13 @@ def auth_base_url() -> str:
 @pytest.fixture
 def ai_base_url() -> str:
     """Base URL for AI service."""
-    return "http://localhost:8002"
+    return "http://localhost:8002/api/v1"
 
 
 @pytest.fixture
 def streaming_base_url() -> str:
     """Base URL for streaming service."""
-    return "http://localhost:8003"
+    return "http://localhost:8003/api/v1"
 
 
 @pytest.fixture
