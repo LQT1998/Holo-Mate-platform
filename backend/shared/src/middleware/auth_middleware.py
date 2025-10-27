@@ -2,38 +2,61 @@
 
 from __future__ import annotations
 
-from typing import Callable
+import logging
+from typing import Awaitable, Callable
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from shared.src.security.jwt import JWTErrorResponse, verify_access_token
 from shared.src.security.token_blacklist import dev_blacklisted
 from shared.src.config import settings
 
+logger = logging.getLogger(__name__)
 
-class JWTAuthMiddleware(BaseHTTPMiddleware):
-    """Middleware that verifies JWT Bearer tokens on incoming requests."""
+# Type alias cho middleware function style
+RequestHandler = Callable[[Request], Awaitable[Response]]
 
-    def __init__(self, app, exclude_paths: list[str] | None = None):
-        super().__init__(app)
-        # Default exclude paths
-        default_exclude = ["/", "/health", "/auth/register", "/auth/login", "/auth/refresh", "/users/me*"]
-        # Merge custom excludes with defaults (ensure parentheses for correct precedence)
-        self.exclude_paths = set((exclude_paths or []) + default_exclude)
-        # Also support prefix-based excludes like '/conversations' or '/messages'
-        self.exclude_prefixes = tuple(p for p in self.exclude_paths if p.endswith("*"))
 
-    async def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:
-        # Skip authentication for excluded exact paths
-        if request.url.path in self.exclude_paths:
+def make_auth_middleware(
+    exclude_paths: list[str] | None = None,
+    exclude_prefixes: tuple[str, ...] | None = None,
+) -> RequestHandler:
+    """Factory function to create JWT auth middleware with custom exclusions.
+
+    Args:
+        exclude_paths: List of exact paths to exclude from auth (e.g., ["/", "/health"])
+        exclude_prefixes: Tuple of path prefixes to exclude (e.g., ("/public",))
+
+    Returns:
+        Async middleware function
+    """
+    # Default excluded paths
+    if exclude_paths is None:
+        exclude_paths = [
+            "/", "/health", "/docs", "/openapi.json", "/redoc",
+            "/auth/register", "/auth/login", "/auth/refresh",
+        ]
+
+    # Default prefix exclusions
+    if exclude_prefixes is None:
+        exclude_prefixes = ("/users/me",)
+
+    async def auth_middleware_inner(request: Request, call_next: RequestHandler) -> Response:
+        """JWT Authentication middleware (function-style, async-safe).
+
+        Features:
+        - Validates Bearer token in Authorization header
+        - Supports excluded paths/prefixes
+        - Handles token revocation (dev blacklist)
+        - Attaches decoded user payload to request.state.user
+        """
+        # --- 1. Skip excluded routes ---
+        path = request.url.path
+        if path in exclude_paths or any(path.startswith(p) for p in exclude_prefixes):
             return await call_next(request)
-        # Skip for prefixes (support pattern '/path*')
-        for prefix in self.exclude_paths:
-            if prefix.endswith("*") and request.url.path.startswith(prefix[:-1]):
-                return await call_next(request)
-            
+
+        # --- 2. Check Authorization header ---
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(
@@ -43,28 +66,110 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             )
 
         token = auth_header.split(" ", maxsplit=1)[1].strip()
-        
-        # Check DEV blacklist first
-        if settings.ENV == "dev" and dev_blacklisted(token):
+
+        # --- 3. DEV blacklist (simulate logout) ---
+        if settings.ENV.lower() == "dev" and dev_blacklisted(token):
+            logger.warning(f"Rejected blacklisted token (dev mode) from {request.client.host}")
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={"detail": "Token revoked"},
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
+        # --- 4. Verify JWT token ---
         try:
             payload = verify_access_token(token)
-            request.state.user = payload
+            request.state.user = payload  # attach user to request context
         except JWTErrorResponse as exc:
             detail = exc.detail or "Invalid authentication credentials"
+            # Normalize message for test expectations
             if exc.status_code == status.HTTP_401_UNAUTHORIZED and "invalid" not in detail.lower():
-                # Normalize detail to include keyword expected by tests
                 detail = "Invalid authentication credentials"
+
             return JSONResponse(
                 status_code=exc.status_code,
                 content={"detail": detail},
                 headers=exc.headers,
             )
+        except Exception as e:
+            logger.exception(f"JWT verification failed: {e}")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"detail": "Invalid authentication credentials"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
+        # --- 5. Continue if valid ---
         return await call_next(request)
 
+    return auth_middleware_inner
+
+
+async def auth_middleware(request: Request, call_next: RequestHandler) -> Response:
+    """JWT Authentication middleware (function-style, async-safe) with default exclusions.
+
+    Features:
+    - Validates Bearer token in Authorization header
+    - Supports excluded paths/prefixes
+    - Handles token revocation (dev blacklist)
+    - Attaches decoded user payload to request.state.user
+    """
+
+    # --- 1. Define excluded paths ---
+    exclude_paths: list[str] = [
+        "/", "/health", "/docs", "/openapi.json", "/redoc",
+        "/auth/register", "/auth/login", "/auth/refresh",
+    ]
+    # Prefix-based exclusions (wildcard-style, e.g. '/users/me*')
+    exclude_prefixes: tuple[str, ...] = ("/users/me",)
+
+    # --- 2. Skip excluded routes ---
+    path = request.url.path
+    if path in exclude_paths or any(path.startswith(p) for p in exclude_prefixes):
+        return await call_next(request)
+
+    # --- 3. Check Authorization header ---
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Not authenticated"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = auth_header.split(" ", maxsplit=1)[1].strip()
+
+    # --- 4. DEV blacklist (simulate logout) ---
+    if settings.ENV.lower() == "dev" and dev_blacklisted(token):
+        logger.warning(f"Rejected blacklisted token (dev mode) from {request.client.host}")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Token revoked"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # --- 5. Verify JWT token ---
+    try:
+        payload = verify_access_token(token)
+        request.state.user = payload  # attach user to request context
+    except JWTErrorResponse as exc:
+        detail = exc.detail or "Invalid authentication credentials"
+        # Normalize message for test expectations
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED and "invalid" not in detail.lower():
+            detail = "Invalid authentication credentials"
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": detail},
+            headers=exc.headers,
+        )
+    except Exception as e:
+        logger.exception(f"JWT verification failed: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Invalid authentication credentials"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # --- 6. Continue if valid ---
+    return await call_next(request)

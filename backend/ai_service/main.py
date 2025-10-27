@@ -8,14 +8,16 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from ai_service.src.exceptions import AppError, app_error_handler
 from ai_service.src.api import ai_companions, conversations, messages, voice_profiles
 from shared.src.db.session import create_engine, close_engine_async
 from shared.src.utils.redis import close_redis, get_redis
-from shared.src.middleware.auth_middleware import JWTAuthMiddleware
+
+# Middleware stack
+from shared.src.middleware import init_middleware_stack
+from shared.src.middleware.auth_middleware import make_auth_middleware
 
 def create_app() -> FastAPI:
     @asynccontextmanager
@@ -35,19 +37,27 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # In DEV, bypass auth for conversation/messages endpoints to satisfy contract tests
-    # In DEV we bypass JWT middleware for all AI service routes and rely on
-    # per-endpoint dependencies to enforce auth behavior/messages.
-    app.add_middleware(JWTAuthMiddleware, exclude_paths=["/*"])  # DEV bypass
+    # ✅ 1. Initialize core middleware stack (CORS, logging, error, security, rate-limit)
+    init_middleware_stack(app)
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://localhost:3001"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+    # ✅ 2. Add JWT authentication middleware (bypass all routes in DEV for contract tests)
+    # In DEV we bypass JWT middleware for all AI service routes and rely on
+    # per-endpoint dependencies to enforce auth behavior.
+    app.middleware("http")(
+        make_auth_middleware(
+            exclude_paths=[
+                # Root & health
+                "/", "/health",
+                # Documentation
+                "/docs", "/openapi.json", "/redoc", "/favicon.ico",
+            ],
+            exclude_prefixes=(
+                "/api/v1",  # DEV: bypass all API routes (auth handled by endpoints)
+            )
+        )
     )
 
+    # ✅ 3. Add exception handler for AppError
     app.add_exception_handler(AppError, app_error_handler)
 
     @app.get("/")
