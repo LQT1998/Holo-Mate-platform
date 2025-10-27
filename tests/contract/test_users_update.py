@@ -93,7 +93,7 @@ class TestPutUsersMe:
         """Test successful user profile update returns 200 with updated data"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -141,7 +141,7 @@ class TestPutUsersMe:
         """Test invalid data returns 422 validation error"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -167,7 +167,7 @@ class TestPutUsersMe:
         """Test missing authorization header returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={"Content-Type": "application/json"},
                 json=valid_update_data
             )
@@ -192,7 +192,7 @@ class TestPutUsersMe:
         """Test invalid access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {invalid_access_token}",
                     "Content-Type": "application/json"
@@ -220,7 +220,7 @@ class TestPutUsersMe:
         """Test expired access token returns 401 Unauthorized"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {expired_access_token}",
                     "Content-Type": "application/json"
@@ -248,7 +248,7 @@ class TestPutUsersMe:
         """Test that password update is rejected (422 or 400)"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -275,7 +275,7 @@ class TestPutUsersMe:
         """Test that restricted fields (id, created_at, is_active) are rejected"""
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"
@@ -306,7 +306,7 @@ class TestPutUsersMe:
         
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{auth_base_url}/users/me",
+                f"{auth_base_url}/me",
                 headers={
                     "Authorization": f"Bearer {valid_access_token}",
                     "Content-Type": "application/json"

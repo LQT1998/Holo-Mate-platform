@@ -147,7 +147,7 @@ class TestPutAICompanionsUpdate:
             assert data["id"] == str(expected_id)
             
             assert "user_id" in data
-            assert data["user_id"] == "00000000-0000-0000-0000-000000000000"  # User ID should not change
+            assert data["user_id"] == "12345678-1234-1234-1234-123456789012"  # User ID should not change (DEV_OWNER_ID)
             
             assert "name" in data
             assert data["name"] == valid_update_data["name"]

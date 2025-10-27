@@ -29,8 +29,10 @@ class TestAICompanionsCreateContract:
     @pytest.fixture
     def valid_companion_data(self) -> Dict[str, Any]:
         """Valid AI companion creation request data"""
+        import uuid
+        unique_name = f"Alice-{str(uuid.uuid4())[:8]}"
         return {
-            "name": "Alice",
+            "name": unique_name,
             "description": "A friendly AI Companion with a warm personality",
             "personality": {
                 "traits": ["friendly", "helpful", "curious"],
@@ -60,8 +62,10 @@ class TestAICompanionsCreateContract:
     @pytest.fixture
     def minimal_companion_data(self) -> Dict[str, Any]:
         """Minimal AI companion creation request data"""
+        import uuid
+        unique_name = f"Bob-{str(uuid.uuid4())[:8]}"
         return {
-            "name": "Bob",
+            "name": unique_name,
             "description": "A simple AI companion"
         }
     
