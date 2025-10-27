@@ -16,9 +16,17 @@ async def test_multi_device_sync_flow(ai_client: AsyncClient, db_session: Sessio
     """
     # This test is complex as it simulates two clients.
     # We will use the same client but check for state consistency.
-    
-    # Pre-requisite: An AI companion exists.
-    companion_id = "some_companion_id"
+
+    # Pre-requisite: Create an AI companion first
+    import uuid
+    companion_payload = {
+        "name": f"SyncCompanion_{uuid.uuid4().hex[:8]}",
+        "description": "Test companion for sync",
+        "personality": {"trait": "helpful"}
+    }
+    companion_response = await ai_client.post("/ai-companions", json=companion_payload, headers=authenticated_user_headers)
+    assert companion_response.status_code == 201
+    companion_id = companion_response.json()["id"]
 
     # Step 1 & 2: Start conversation on "Device A"
     conv_payload = {"ai_companion_id": companion_id, "title": "Sync Test"}

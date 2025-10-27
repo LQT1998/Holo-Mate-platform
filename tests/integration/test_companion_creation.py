@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
@@ -11,9 +12,10 @@ async def test_ai_companion_creation_flow(ai_client, db_session: Session, authen
     3. Default CharacterAsset and VoiceProfile are created.
     4. The new companion appears in the user's list of companions.
     """
-    # Step 1: Create a new companion
+    # Step 1: Create a new companion with unique name
+    unique_name = f"Luna_{uuid.uuid4().hex[:8]}"
     companion_payload = {
-        "name": "Luna",
+        "name": unique_name,
         "description": "A creative and insightful companion.",
         "personality": {"trait": "creative"}
     }
@@ -22,7 +24,7 @@ async def test_ai_companion_creation_flow(ai_client, db_session: Session, authen
     
     assert create_response.status_code == 201
     companion_data = create_response.json()
-    assert companion_data["name"] == "Luna"
+    assert companion_data["name"] == unique_name
     companion_id = companion_data["id"]
 
     # Step 2 & 3: Verify database records (will fail until implemented)

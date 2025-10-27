@@ -15,9 +15,15 @@ async def test_voice_conversation_flow(ai_client: AsyncClient, db_session: Sessi
     6. Another Message record (from AI) is created.
     7. The conversation history is correctly updated.
     """
-    # Pre-requisite: An AI companion must exist. 
-    # This would typically be set up in a fixture.
-    companion_id = str(uuid.uuid4()) # Placeholder
+    # Pre-requisite: Create an AI companion first
+    companion_payload = {
+        "name": f"TestCompanion_{uuid.uuid4().hex[:8]}",
+        "description": "Test companion for conversation flow",
+        "personality": {"trait": "helpful"}
+    }
+    companion_response = await ai_client.post("/ai-companions", json=companion_payload, headers=authenticated_user_headers)
+    assert companion_response.status_code == 201
+    companion_id = companion_response.json()["id"]
 
     # Step 1 & 2: Start a new conversation
     start_conv_payload = {"ai_companion_id": companion_id}

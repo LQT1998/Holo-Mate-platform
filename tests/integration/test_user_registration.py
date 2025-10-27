@@ -50,9 +50,9 @@ async def test_user_registration_login_profile_flow(auth_base_url: str):
         access_token = login_json.get("access_token")
         assert access_token and isinstance(access_token, str)
 
-        # 3) Get profile
+        # 3) Get profile (correct endpoint is /api/v1/me not /api/v1/users/me)
         headers = {"Authorization": f"Bearer {access_token}"}
-        me_resp = await client.get("/users/me", headers=headers)
+        me_resp = await client.get("/api/v1/me", headers=headers)
         assert me_resp.status_code == 200
         me_json = me_resp.json()
         assert me_json.get("email") == email
@@ -74,9 +74,11 @@ async def test_user_registration_flow(auth_client: AsyncClient, db_session: Sess
     4. A default "free" Subscription is created.
     5. The user can then log in successfully.
     """
-    # Step 1: Register a new user
+    # Step 1: Register a new user with unique email
+    import uuid
+    unique_email = f"test.reg.{uuid.uuid4().hex[:8]}@example.com"
     registration_payload = {
-        "email": "test.registration@example.com",
+        "email": unique_email,
         "password": "strongpassword123",
         "first_name": "Test",
         "last_name": "User"

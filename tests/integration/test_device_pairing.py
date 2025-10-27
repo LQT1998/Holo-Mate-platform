@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
@@ -11,11 +12,12 @@ async def test_device_pairing_flow(streaming_client: AsyncClient, db_session: Se
     3. The device appears in the user's list of devices.
     4. User can update the device's settings.
     """
-    # Step 1: Register a new device
+    # Step 1: Register a new device with unique serial number
+    unique_serial = f"HP1-LIVINGROOM-{uuid.uuid4().hex[:8].upper()}"
     device_payload = {
         "name": "Living Room Holo-Pad",
         "device_type": "HOLO_PAD_V1",
-        "serial_number": "HP1-LIVINGROOM-XYZ"
+        "serial_number": unique_serial
     }
     
     register_response = await streaming_client.post("/devices", json=device_payload, headers=authenticated_user_headers)
