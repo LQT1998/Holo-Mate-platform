@@ -11,7 +11,7 @@ import uuid
 class MessageCreate(BaseModel):
     """Schema for creating a new message"""
     content: str = Field(..., min_length=1, max_length=10000)
-    role: Literal["user", "companion"]
+    role: Literal["user", "companion"] = "user"
     content_type: Literal["text", "audio_url"] = "text"
 
 

@@ -3,7 +3,8 @@ Conversations API endpoints for AI service
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
-from typing import Optional, Literal
+from typing import Optional, Literal, Dict, Mapping, Any, TYPE_CHECKING
+
 from datetime import datetime, timezone
 import uuid
 
@@ -13,6 +14,7 @@ from ai_service.src.services.conversation_service import ConversationService
 from ai_service.src.services.ai_companion_service import CompanionService
 from shared.src.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text as _sql_text
 
 from ai_service.src.schemas.conversation import (
     ConversationListResponse,
@@ -119,7 +121,7 @@ async def list_conversations(
     sort_by: Optional[Literal["created_at", "updated_at", "last_message_at", "title"]] = "created_at",
     sort_order: Optional[Literal["asc", "desc"]] = "desc",
     include_metadata: Optional[bool] = False,
-    current_user: dict = Depends(get_current_user),
+    current_user: Mapping[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     if settings.DEV_MODE:
@@ -294,9 +296,50 @@ async def create_conversation(
             # Contract: unauthorized companion -> 403
             raise HTTPException(status_code=403, detail="Forbidden: Companion not owned by user")
 
+        # Ensure user and companion exist for FK integrity in DEV
+        user_uuid = uuid.UUID(str(current_user["id"]))
+        # Ensure user exists in DB (DEV convenience)
+        # Insert user stub if missing without selecting ORM (avoid legacy column mismatch)
+        await db.execute(
+            _sql_text(
+                "INSERT INTO users (id, email) VALUES (:id, :email) ON CONFLICT (id) DO NOTHING"
+            ),
+            {"id": str(user_uuid), "email": f"{user_uuid}@dev.local"},
+        )
+        await db.commit()
+        if payload.companion_id is None and getattr(payload, "ai_companion_id", None):
+            payload.companion_id = payload.ai_companion_id
+
+        comp_service = CompanionService(db)
+        if payload.companion_id is None:
+            # Create a new companion for the user
+            new_companion = await comp_service.create_companion(
+                user_id=user_uuid,
+                name=f"Auto-{uuid.uuid4().hex[:8]}",
+                description="Auto-created for DEV conversation",
+            )
+            payload.companion_id = new_companion.id
+        else:
+            existing = await comp_service.get_companion_by_id(user_uuid, payload.companion_id)
+            if existing is None:
+                # Insert minimal companion row with the exact provided ID to satisfy contract
+                await db.execute(
+                    _sql_text(
+                        "INSERT INTO ai_companions (id, user_id, name, description, status, created_at, updated_at) "
+                        "VALUES (:id, :user_id, :name, :description, :status, NOW(), NOW()) ON CONFLICT (id) DO NOTHING"
+                    ),
+                    {
+                        "id": str(payload.companion_id),
+                        "user_id": str(user_uuid),
+                        "name": f"Dev-{str(payload.companion_id)[:8]}",
+                        "description": "Auto-created for DEV conversation",
+                        "status": "active",
+                    },
+                )
+                await db.commit()
+
         # Use real service/DB to persist conversation in DEV
         service = ConversationService(db)
-        user_uuid = uuid.UUID(str(current_user["id"]))
         created = await service.create_conversation(user_uuid, payload)
         response.headers["Location"] = f"/conversations/{created.id}"
         return ConversationRead(
@@ -307,10 +350,11 @@ async def create_conversation(
             status=created.status,
             created_at=created.created_at,
             updated_at=created.updated_at,
-            last_message_at=None,
+            last_message_at=created.created_at,
             message_count=0,
             metadata=None,
             settings=ConversationSettings(),
+            initial_message=payload.initial_message,
         )
 
     raise HTTPException(status_code=501, detail="Not implemented")
@@ -476,7 +520,7 @@ async def get_conversation_messages(
     conversation_id: str,
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Number of messages per page"),
-    current_user: dict = Depends(get_current_user),
+    current_user: Mapping[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -573,7 +617,8 @@ async def get_conversation_messages(
     total = await service.count_messages(user_uuid, conv_uuid)
     total_pages = (total + per_page - 1) // per_page
 
-    # Convert to response format
+    # Convert to response format (ensure timezone-aware datetimes)
+    from datetime import timezone as _tz
     message_responses = [
         MessageResponse(
             id=msg.id,
@@ -581,8 +626,8 @@ async def get_conversation_messages(
             role=msg.role,
             content=msg.content,
             content_type=msg.content_type,
-            created_at=msg.created_at,
-            updated_at=None,  # Message model doesn't have updated_at
+            created_at=(msg.created_at.replace(tzinfo=_tz.utc) if msg.created_at and msg.created_at.tzinfo is None else msg.created_at),
+            updated_at=(msg.created_at.replace(tzinfo=_tz.utc) if msg.created_at else None),
         )
         for msg in messages
     ]

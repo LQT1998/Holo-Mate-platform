@@ -176,11 +176,11 @@ async def create_message(
             created_message = MessageResponse(
                 id=message_uuid,
                 conversation_id=conversation_uuid,
-                role=message_data.role,
+                role=message_data.role or "user",
                 content=message_data.content,
-                content_type=message_data.content_type,
+                content_type=message_data.content_type or "text",
                 created_at=now,
-                updated_at=None,
+                updated_at=now,
             )
 
             response.headers["Location"] = f"/messages/{message_uuid}"
@@ -193,17 +193,25 @@ async def create_message(
     conversation_uuid = uuid.UUID(conversation_id) if isinstance(conversation_id, str) else conversation_id
     user_uuid = uuid.UUID(str(current_user["id"]))
 
+    # Fill defaults if missing in DEV
+    if settings.DEV_MODE:
+        if not getattr(message_data, "role", None):
+            from shared.src.schemas.message_schema import MessageCreate as _MC
+            message_data = _MC(content=message_data.content, role="user", content_type=message_data.content_type or "text")
+
     message = await service.create_message(user_uuid, conversation_uuid, message_data)
 
     response.headers["Location"] = f"/messages/{message.id}"
+    from datetime import timezone as _tz
+    created_at = message.created_at.replace(tzinfo=_tz.utc) if message.created_at and message.created_at.tzinfo is None else message.created_at
     return MessageResponse(
         id=message.id,
         conversation_id=message.conversation_id,
         role=message.role,
         content=message.content,
         content_type=message.content_type,
-        created_at=message.created_at,
-        updated_at=None,  # Message model doesn't have updated_at
+        created_at=created_at,
+        updated_at=created_at,
     )
 
 
@@ -236,7 +244,7 @@ async def get_message(
             content="Hello, this is a test message",
             content_type="text",
             created_at=now,
-            updated_at=None,
+            updated_at=now,
         )
     else:
         # Non-DEV path: use MessageService
@@ -246,14 +254,16 @@ async def get_message(
         
         message = await service.get_message_by_id(user_uuid, message_uuid)
         
+        from datetime import timezone as _tz
+        created_at = message.created_at.replace(tzinfo=_tz.utc) if message.created_at and message.created_at.tzinfo is None else message.created_at
         return MessageResponse(
             id=message.id,
             conversation_id=message.conversation_id,
             role=message.role,
             content=message.content,
             content_type=message.content_type,
-            created_at=message.created_at,
-            updated_at=None,  # Message model doesn't have updated_at
+            created_at=created_at,
+            updated_at=created_at,
         )
 
 
