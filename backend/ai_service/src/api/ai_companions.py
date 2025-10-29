@@ -31,7 +31,7 @@ def normalize_companion_id(companion_id: str) -> uuid.UUID:
     """
     Normalize companion_id to UUID.
 
-    - DEV: map arbitrary id to stable UUID5 using namespace + id text
+    - DEV: If valid UUID, use it directly. Otherwise, map to stable UUID5 using namespace + id text
     - PROD: require valid UUID; invalid -> 422
     """
     if not companion_id or companion_id.strip() != companion_id or any(
@@ -39,13 +39,15 @@ def normalize_companion_id(companion_id: str) -> uuid.UUID:
     ):
         raise HTTPException(status_code=422, detail="Invalid companion id format")
 
-    if settings.DEV_MODE:
-        return uuid.uuid5(uuid.NAMESPACE_URL, f"dev:ai-companion:{companion_id}")
-
+    # Try to parse as UUID first (works for both DEV and PROD)
     try:
         return uuid.UUID(companion_id)
     except Exception:
-        raise HTTPException(status_code=422, detail="Invalid companion id format")
+        # If not a valid UUID, check if we're in DEV mode
+        if settings.DEV_MODE:
+            return uuid.uuid5(uuid.NAMESPACE_URL, f"dev:ai-companion:{companion_id}")
+        else:
+            raise HTTPException(status_code=422, detail="Invalid companion id format")
 
 
 @router.get("/ai-companions", response_model=AICompanionListResponse)
@@ -233,7 +235,8 @@ async def get_ai_companion(
                 updated_at=now,
             )
 
-        raise HTTPException(status_code=404, detail="AI Companion not found")
+        # For unknown IDs in DEV_MODE, fall through to real DB lookup
+        # This allows integration tests to create and retrieve real data
 
     # Non-DEV path: fetch from DB
     service = CompanionService(db)

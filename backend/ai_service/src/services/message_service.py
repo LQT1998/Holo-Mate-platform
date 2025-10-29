@@ -120,14 +120,14 @@ class MessageService:
             raise HTTPException(status_code=404, detail="Conversation not found")
 
         # Create message
-        now = datetime.now(timezone.utc)
+        # Note: Use UTC but convert to naive datetime for TIMESTAMP WITHOUT TIME ZONE
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         message = Message(
             conversation_id=conversation_id,
             role=data.role,
             content=data.content,
             content_type=data.content_type or "text",
             created_at=now,
-            updated_at=now,
         )
         self.db.add(message)
         
