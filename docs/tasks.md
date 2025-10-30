@@ -197,12 +197,12 @@
 ## Phase 3.4: Integration
 - [✓] T107 Database connection and migration setup
 - [✓] T108 Redis connection and caching setup
-- [ ] T109 JWT authentication middleware
-- [ ] T110 CORS and security headers
-- [ ] T111 Request/response logging middleware
-- [ ] T112 Error handling middleware
-- [ ] T113 Rate limiting middleware
-- [ ] T114 WebSocket connection handling
+- [x] T109 JWT authentication middleware
+- [x] T110 CORS and security headers
+- [x] T111 Request/response logging middleware
+- [x] T112 Error handling middleware
+- [x] T113 Rate limiting middleware
+- [ ] T114 WebSocket connection handling  # Ưu tiên tiếp theo
 - [ ] T115 AI service integration (OpenAI, ElevenLabs)
 - [ ] T116 Stripe payment integration
 - [ ] T117 S3 asset storage integration
