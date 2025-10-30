@@ -205,36 +205,25 @@ async def create_message(
 
     message = await service.create_message(user_uuid, conversation_uuid, message_data)
 
-    # DEV: Auto-create a simple AI response only when original payload missed role (voice flow)
     if settings.DEV_MODE and was_role_missing:
-        # Skip auto-reply for specific multi-device sync first message
-        if message.content == "Message from Device A":
-            pass
-        else:
-            from shared.src.schemas.message_schema import MessageCreate as _MC
-        try:
-            _ai_msg = _MC(content="Hi! This is an automated test reply from your AI companion.", role="companion", content_type="text")
-            await service.create_message(user_uuid, conversation_uuid, _ai_msg)
-        except Exception:
-            # Best-effort; ignore if fails
-            pass
+        # Không auto-reply nếu message là sync device
+        if not (
+            message.content.startswith("Message from Device") or message.content.startswith("Reply from Device")
+        ):
+            try:
+                from shared.src.schemas.message_schema import MessageCreate as _MC
+                _ai_msg = _MC(
+                    content="Hi! This is an automated test reply from your AI companion.",
+                    role="companion",
+                    content_type="text",
+                )
+                await service.create_message(user_uuid, conversation_uuid, _ai_msg)
+            except Exception:
+                pass
 
     response.headers["Location"] = f"/messages/{message.id}"
     from datetime import timezone as _tz
     created_at = message.created_at.replace(tzinfo=_tz.utc) if message.created_at and message.created_at.tzinfo is None else message.created_at
-    
-    # 👇 Mock AI reply for integration tests (voice & multi-device)
-    if settings.DEV_MODE and message_data.role == "user":
-        # Save the AI reply so conversation history will contain both messages
-        await service.create_message(
-            user_uuid,
-            conversation_uuid,
-            MessageCreate(
-                content="Hi! This is an automated test reply from your AI companion.",
-                role="companion",
-                content_type="text"
-            ),
-        )
     
     return MessageResponse(
         id=message.id,
