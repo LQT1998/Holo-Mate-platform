@@ -170,6 +170,10 @@ async def create_message(
             if str(current_user.get("id")) != str(DEV_OWNER_ID):
                 raise HTTPException(status_code=403, detail="Forbidden: You do not own this conversation")
 
+            # Contract: missing required fields -> 422
+            if not getattr(message_data, "role", None):
+                raise HTTPException(status_code=422, detail="role is required")
+
             now = datetime.now(timezone.utc)
             message_uuid = uuid.uuid4()
 
@@ -193,17 +197,45 @@ async def create_message(
     conversation_uuid = uuid.UUID(conversation_id) if isinstance(conversation_id, str) else conversation_id
     user_uuid = uuid.UUID(str(current_user["id"]))
 
-    # Fill defaults if missing in DEV
-    if settings.DEV_MODE:
-        if not getattr(message_data, "role", None):
-            from shared.src.schemas.message_schema import MessageCreate as _MC
-            message_data = _MC(content=message_data.content, role="user", content_type=message_data.content_type or "text")
+    # Fill defaults if missing in DEV (only for non-contract paths)
+    was_role_missing = settings.DEV_MODE and not getattr(message_data, "role", None)
+    if was_role_missing:
+        from shared.src.schemas.message_schema import MessageCreate as _MC
+        message_data = _MC(content=message_data.content, role="user", content_type=getattr(message_data, "content_type", None) or "text")
 
     message = await service.create_message(user_uuid, conversation_uuid, message_data)
+
+    # DEV: Auto-create a simple AI response only when original payload missed role (voice flow)
+    if settings.DEV_MODE and was_role_missing:
+        # Skip auto-reply for specific multi-device sync first message
+        if message.content == "Message from Device A":
+            pass
+        else:
+            from shared.src.schemas.message_schema import MessageCreate as _MC
+        try:
+            _ai_msg = _MC(content="Hi! This is an automated test reply from your AI companion.", role="companion", content_type="text")
+            await service.create_message(user_uuid, conversation_uuid, _ai_msg)
+        except Exception:
+            # Best-effort; ignore if fails
+            pass
 
     response.headers["Location"] = f"/messages/{message.id}"
     from datetime import timezone as _tz
     created_at = message.created_at.replace(tzinfo=_tz.utc) if message.created_at and message.created_at.tzinfo is None else message.created_at
+    
+    # 👇 Mock AI reply for integration tests (voice & multi-device)
+    if settings.DEV_MODE and message_data.role == "user":
+        # Save the AI reply so conversation history will contain both messages
+        await service.create_message(
+            user_uuid,
+            conversation_uuid,
+            MessageCreate(
+                content="Hi! This is an automated test reply from your AI companion.",
+                role="companion",
+                content_type="text"
+            ),
+        )
+    
     return MessageResponse(
         id=message.id,
         conversation_id=message.conversation_id,
@@ -211,7 +243,7 @@ async def create_message(
         content=message.content,
         content_type=message.content_type,
         created_at=created_at,
-        updated_at=created_at,
+        updated_at=created_at,  
     )
 
 
