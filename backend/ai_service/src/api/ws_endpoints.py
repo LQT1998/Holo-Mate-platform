@@ -11,6 +11,9 @@ from backend.ai_service.src.realtime.auth import auth_ws
 from backend.ai_service.src.realtime.rate_limit import TokenBucket
 from backend.ai_service.src.realtime.settings import get_settings
 from backend.ai_service.src.realtime.bus import bus
+from backend.ai_service.src.realtime.typing_debounce import typing_debounce
+from backend.ai_service.src.services.read_service import read_service
+from backend.ai_service.src.realtime.metrics import count_in, count_out, count_rl, observe_room
 
 
 router = APIRouter()
@@ -72,6 +75,10 @@ async def ws_endpoint(websocket: WebSocket):
 
             if not limiter.consume(1.0):
                 await websocket.send_json({"type": "error", "error": "rate_limited"})
+                try:
+                    count_rl()
+                except Exception:
+                    pass
                 await websocket.close(code=4408)
                 break
 
@@ -82,6 +89,10 @@ async def ws_endpoint(websocket: WebSocket):
                 continue
 
             etype = evt.get("type")
+            try:
+                count_in(str(etype))
+            except Exception:
+                pass
             if etype == "presence.join":
                 data = evt.get("data") or {}
                 cids = set(data.get("cids") or [])
@@ -103,14 +114,39 @@ async def ws_endpoint(websocket: WebSocket):
                 ack = {"type": "message.ack", "cid": cid, "data": {"ok": True}}
                 await websocket.send_json(ack)
                 event = {"type": "message.new", "data": data, "cid": cid}
-                await manager.broadcast_to_conversation(cid, event, exclude=None)
+                recipients = await manager.broadcast_to_conversation(cid, event, exclude=None)
+                try:
+                    count_out("message.new", max(recipients, 0))
+                    observe_room(max(recipients, 0))
+                except Exception:
+                    pass
                 await bus.publish_conversation(cid, event)
 
             elif etype == "typing":
                 cid = evt.get("cid") or (evt.get("data") or {}).get("cid")
                 is_typing = bool((evt.get("data") or {}).get("is_typing", True))
-                if cid:
-                    await manager.broadcast_to_conversation(cid, {"type": "typing", "data": {"cid": cid, "is_typing": is_typing}}, exclude=websocket)
+                if cid and user_id and typing_debounce.should_emit(str(user_id), str(cid)):
+                    await manager.broadcast_to_conversation(
+                        cid,
+                        {"type": "typing", "data": {"cid": cid, "user_id": user_id, "is_typing": is_typing}},
+                        exclude=websocket,
+                    )
+
+            elif etype == "message.read":
+                cid = evt.get("cid") or (evt.get("data") or {}).get("cid")
+                mid = (evt.get("data") or {}).get("mid")
+                if not (cid and mid and user_id):
+                    await websocket.send_json({"type": "error", "error": "invalid_read"})
+                    continue
+                rec = await read_service.mark_read(str(user_id), str(cid), str(mid))
+                event = {"type": "message.read", "cid": cid, "data": rec}
+                recipients = await manager.broadcast_to_conversation(cid, event, exclude=None)
+                try:
+                    count_out("message.read", max(recipients, 0))
+                    observe_room(max(recipients, 0))
+                except Exception:
+                    pass
+                await bus.publish_conversation(cid, event)
 
             elif etype == "pong":
                 pass
@@ -128,7 +164,11 @@ async def ws_endpoint(websocket: WebSocket):
         left = await manager.leave_all(websocket)
         await manager.disconnect(websocket)
         for cid in left:
-            await manager.broadcast_to_conversation(cid, {"type": "presence.leave", "data": {"cid": cid}}, exclude=websocket)
+            await manager.broadcast_to_conversation(
+                cid,
+                {"type": "presence.leave", "data": {"cid": cid, "user_id": user_id}},
+                exclude=websocket,
+            )
 
 
 @router.websocket("/ws/conversations/{conversation_id}")

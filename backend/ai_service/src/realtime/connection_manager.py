@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, Set, Optional
 from fastapi import WebSocket
+from backend.ai_service.src.realtime.metrics import on_connect, on_disconnect, count_drop
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,10 @@ class ConnectionManager:
             if user_id:
                 self._by_user[user_id].add(conn)
         await conn.start()
+        try:
+            on_connect()
+        except Exception:
+            pass
         return conn
 
     async def join_rooms(self, ws: WebSocket, cids: Set[str]) -> None:
@@ -92,6 +97,10 @@ class ConnectionManager:
                 self._by_user[conn.user_id].discard(conn)
         if conn:
             await conn.close()
+        try:
+            on_disconnect()
+        except Exception:
+            pass
 
     async def broadcast_to_conversation(self, cid: str, event: Dict[str, Any], exclude: Optional[WebSocket] = None) -> int:
         recipients = 0
