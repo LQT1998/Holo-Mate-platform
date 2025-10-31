@@ -12,6 +12,9 @@ import uvicorn
 
 from ai_service.src.exceptions import AppError, app_error_handler
 from ai_service.src.api import ai_companions, conversations, messages, voice_profiles
+from ai_service.src.api.ws_endpoints import router as ws_router
+from ai_service.src.api._dev_endpoints import router as _dev_router
+from ai_service.src.config import settings as ai_settings
 from shared.src.db.session import create_engine, close_engine_async
 from shared.src.utils.redis import close_redis, get_redis
 
@@ -23,7 +26,12 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         create_engine()
-        await get_redis()
+        # Best-effort Redis init (do not block startup if Redis unavailable in DEV)
+        try:
+            await get_redis()
+        except Exception:
+            # Continue without Redis; realtime WS bus will still work in Noop mode
+            pass
         try:
             yield
         finally:
@@ -72,6 +80,11 @@ def create_app() -> FastAPI:
     app.include_router(conversations.router, prefix="/api/v1")
     app.include_router(messages.router, prefix="/api/v1")
     app.include_router(voice_profiles.router, prefix="/api/v1")
+    # WS endpoints (no API prefix)
+    app.include_router(ws_router)
+    # DEV helpers
+    if getattr(ai_settings, "DEV_MODE", False):
+        app.include_router(_dev_router)
 
     return app
 

@@ -20,6 +20,7 @@ from shared.src.schemas.message_schema import (
 )
 from ai_service.src.schemas.ai_companion import DeleteResponse
 from shared.src.constants import DEV_OWNER_ID
+from backend.ai_service.src.realtime.events import publish_message_created
 
 router = APIRouter(tags=["Messages"])
 
@@ -204,6 +205,19 @@ async def create_message(
         message_data = _MC(content=message_data.content, role="user", content_type=getattr(message_data, "content_type", None) or "text")
 
     message = await service.create_message(user_uuid, conversation_uuid, message_data)
+    # Realtime fan-out after persist
+    try:
+        await publish_message_created(str(conversation_uuid), {
+            "id": str(message.id),
+            "conversation_id": str(message.conversation_id),
+            "role": message.role,
+            "content": message.content,
+            "content_type": message.content_type,
+            "created_at": (message.created_at.replace(tzinfo=timezone.utc) if message.created_at and message.created_at.tzinfo is None else message.created_at).isoformat() if message.created_at else None,
+        })
+    except Exception:
+        # Best-effort; do not fail request if WS publish fails
+        pass
 
     if settings.DEV_MODE and was_role_missing:
         # Không auto-reply nếu message là sync device
